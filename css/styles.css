@@ -1,0 +1,216 @@
+:root{
+  --pp-orange:#b7472a;        /* PowerPoint accent */
+  --pp-orange-dark:#a23720;
+  --ribbon-bg:#f3f2f1;
+  --tab-bar:#fff;
+  --panel-bg:#fafafa;
+  --line:#e1dfdd;
+  --line-strong:#c8c6c4;
+  --text:#262626;
+  --muted:#605e5c;
+  --sel:#2b79d8;
+  --workspace:#e6e6e6;
+  --hover:#eceae9;
+  --active:#dcdbda;
+}
+
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{
+  font-family:"Segoe UI",-apple-system,system-ui,Arial,sans-serif;
+  font-size:13px;color:var(--text);
+  overflow:hidden;background:var(--workspace);
+  -webkit-user-select:none;user-select:none;
+}
+.hidden{display:none !important}
+
+#app{display:flex;flex-direction:column;height:100vh;width:100vw}
+
+/* ---------- Title bar ---------- */
+#titlebar{
+  height:30px;background:var(--pp-orange);color:#fff;
+  display:flex;align-items:center;padding:0 8px;gap:8px;flex:0 0 auto;
+}
+.qat{display:flex;gap:2px}
+.qat-btn{
+  width:24px;height:22px;border:0;background:transparent;color:#fff;
+  cursor:pointer;border-radius:3px;font-size:14px;line-height:1;
+}
+.qat-btn:hover{background:rgba(255,255,255,.18)}
+.title-center{flex:1;text-align:center;font-size:12px;opacity:.95}
+.title-right{font-size:12px;display:flex;align-items:center;gap:8px}
+.title-user{
+  background:rgba(255,255,255,.15);padding:2px 10px;border-radius:11px;font-size:11px;
+}
+
+/* ---------- Work area ---------- */
+#work{flex:1;display:flex;min-height:0;background:var(--workspace)}
+
+/* Thumbnails */
+#thumbs-panel{
+  width:200px;flex:0 0 auto;background:var(--panel-bg);
+  border-right:1px solid var(--line-strong);overflow-y:auto;overflow-x:hidden;
+  padding:8px 6px;
+}
+.thumbs{display:flex;flex-direction:column;gap:10px}
+.thumb-row{display:flex;gap:6px;align-items:flex-start}
+.thumb-num{width:16px;text-align:right;font-size:11px;color:var(--muted);padding-top:6px;flex:0 0 auto}
+.thumb{
+  flex:1;aspect-ratio:16/9;background:#fff;border:1px solid var(--line-strong);
+  position:relative;cursor:pointer;border-radius:1px;overflow:hidden;
+}
+.thumb.active{outline:2px solid var(--pp-orange);outline-offset:0}
+.thumb-render{position:absolute;inset:0;transform-origin:top left}
+.thumb-drop{height:3px;background:var(--pp-orange);margin:2px 0;border-radius:2px}
+
+/* Editor */
+#editor{flex:1;display:flex;flex-direction:column;min-width:0;min-height:0}
+#canvas-scroll{flex:1;overflow:auto;display:flex;background:var(--workspace)}
+#stage{margin:auto;padding:28px}
+#slide-canvas{
+  position:relative;background:#fff;box-shadow:0 1px 6px rgba(0,0,0,.28);
+}
+#slide-bg{position:absolute;inset:0}
+#slide-objects{position:absolute;inset:0}
+#selection-layer{position:absolute;inset:0;pointer-events:none}
+#marquee{
+  position:absolute;border:1px solid var(--sel);
+  background:rgba(43,121,216,.12);display:none;pointer-events:none;z-index:50;
+}
+
+/* Notes */
+#notes-pane{
+  height:90px;flex:0 0 auto;border-top:1px solid var(--line-strong);
+  background:#fff;display:flex;flex-direction:column;
+}
+.notes-label{display:none}
+#notes-area{
+  flex:1;border:0;resize:none;padding:8px 16px;font-family:inherit;font-size:13px;
+  color:var(--text);outline:none;text-align:center;
+}
+
+/* ---------- Status bar ---------- */
+#statusbar{
+  height:24px;flex:0 0 auto;background:var(--pp-orange);color:#fff;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 10px;font-size:11px;
+}
+.status-left{display:flex;gap:14px;align-items:center}
+#status-msg{opacity:.85}
+.status-right{display:flex;align-items:center;gap:10px}
+.view-btn{
+  background:transparent;border:0;color:#fff;cursor:pointer;font-size:14px;
+  width:24px;height:20px;border-radius:3px;
+}
+.view-btn:hover{background:rgba(255,255,255,.18)}
+.zoom{display:flex;align-items:center;gap:6px}
+.zoom button{
+  background:transparent;border:0;color:#fff;cursor:pointer;font-size:13px;
+  width:18px;height:18px;border-radius:9px;
+}
+.zoom button:hover{background:rgba(255,255,255,.2)}
+#zoom-slider{width:110px}
+#zoom-label{width:38px;text-align:right}
+
+/* ---------- Selection handles ---------- */
+.obj{position:absolute;cursor:move;overflow:visible}
+.obj-content{position:absolute;inset:0}
+.sel-box{
+  position:absolute;border:1px solid var(--sel);pointer-events:none;
+  box-sizing:border-box;
+}
+.handle{
+  position:absolute;width:9px;height:9px;background:#fff;border:1px solid var(--sel);
+  border-radius:50%;pointer-events:auto;z-index:60;
+}
+.handle.sq{border-radius:1px}
+.handle[data-h="nw"]{cursor:nwse-resize}
+.handle[data-h="ne"]{cursor:nesw-resize}
+.handle[data-h="sw"]{cursor:nesw-resize}
+.handle[data-h="se"]{cursor:nwse-resize}
+.handle[data-h="n"]{cursor:ns-resize}
+.handle[data-h="s"]{cursor:ns-resize}
+.handle[data-h="e"]{cursor:ew-resize}
+.handle[data-h="w"]{cursor:ew-resize}
+.handle.rotate{
+  border-radius:50%;background:#fff;border:1px solid var(--sel);
+  width:12px;height:12px;cursor:grab;
+}
+.rotate-stem{position:absolute;width:1px;background:var(--sel);pointer-events:none}
+
+/* Tables */
+.pp-table{width:100%;height:100%}
+.pp-table td{outline:none}
+.obj .pp-table{pointer-events:auto}
+
+/* Group (multi-select) bounding box */
+.group-box{position:absolute;border:1px dashed var(--sel);pointer-events:none;box-sizing:border-box}
+
+/* Crop handles (PowerPoint black corner/edge marks) */
+.crop-handle{position:absolute;background:#1a1a1a;border:1px solid #fff;pointer-events:auto;z-index:70}
+.crop-handle[data-ch="nw"],.crop-handle[data-ch="ne"],.crop-handle[data-ch="sw"],.crop-handle[data-ch="se"]{border-radius:1px}
+/* Edit-points vertices */
+.vertex-handle{position:absolute;background:#1a1a1a;border:1px solid #fff;pointer-events:auto;z-index:70;cursor:move}
+.vertex-handle.active{background:#fff;border:1px solid #1a1a1a;outline:1px solid #1a1a1a}
+.ep-ctrl{position:absolute;background:#fff;border:1px solid #1a1a1a;border-radius:50%;pointer-events:auto;z-index:71;cursor:crosshair}
+.ep-line{position:absolute;background:#7a7a7a;pointer-events:none;z-index:69}
+
+/* Text editing */
+.obj-text{
+  width:100%;height:100%;outline:none;overflow:hidden;
+  word-wrap:break-word;white-space:pre-wrap;cursor:text;
+}
+.obj.editing .obj-text{cursor:text}
+.obj.editing{cursor:text}
+
+/* Placeholder look */
+.placeholder-hint{color:#b3b3b3}
+
+/* Bulleted / numbered paragraphs (each direct child block = one paragraph) */
+.obj-text>div,.obj-text>p{min-height:1em}
+.obj-text.bulleted>div,.obj-text.bulleted>p{position:relative;padding-left:1.3em}
+.obj-text.bulleted>div::before,.obj-text.bulleted>p::before{content:"\2022";position:absolute;left:.25em;top:0}
+.obj-text.numbered{counter-reset:li}
+.obj-text.numbered>div,.obj-text.numbered>p{counter-increment:li;position:relative;padding-left:1.7em}
+.obj-text.numbered>div::before,.obj-text.numbered>p::before{content:counter(li)".";position:absolute;left:.2em;top:0}
+
+/* ---------- Slideshow ---------- */
+#slideshow{
+  position:fixed;inset:0;background:#000;z-index:9999;
+  display:flex;align-items:center;justify-content:center;cursor:none;
+}
+#slideshow.show-cursor{cursor:default}
+#show-stage{position:relative;box-shadow:0 0 40px rgba(0,0,0,.6)}
+#show-controls{
+  position:fixed;bottom:18px;left:50%;transform:translateX(-50%);
+  display:flex;gap:6px;background:rgba(40,40,40,.7);padding:6px 8px;border-radius:8px;
+  opacity:0;transition:opacity .2s;
+}
+#slideshow:hover #show-controls{opacity:1}
+#show-controls button{
+  background:transparent;border:0;color:#fff;font-size:18px;cursor:pointer;
+  width:34px;height:30px;border-radius:5px;
+}
+#show-controls button:hover{background:rgba(255,255,255,.2)}
+
+/* ---------- Context menu ---------- */
+.ctx{
+  position:fixed;z-index:5000;background:#fff;border:1px solid var(--line-strong);
+  box-shadow:0 4px 14px rgba(0,0,0,.18);border-radius:4px;padding:4px 0;min-width:200px;
+  font-size:13px;
+}
+.ctx-item{
+  display:flex;align-items:center;gap:10px;padding:5px 14px;cursor:pointer;white-space:nowrap;
+}
+.ctx-item:hover{background:var(--hover)}
+.ctx-item.disabled{color:#bbb;pointer-events:none}
+.ctx-item .ctx-key{margin-left:auto;color:var(--muted);font-size:11px;padding-left:24px}
+.ctx-sep{height:1px;background:var(--line);margin:4px 0}
+
+/* Slide sorter view */
+#thumbs-panel.sorter-mode{display:none}
+#editor.sorter-mode #canvas-scroll{flex-wrap:wrap;align-content:flex-start;padding:20px;gap:18px;overflow:auto}
+.sorter-grid{display:flex;flex-wrap:wrap;gap:20px;padding:24px;align-content:flex-start}
+.sorter-card{width:220px;aspect-ratio:16/9;background:#fff;border:1px solid var(--line-strong);position:relative;cursor:pointer}
+.sorter-card.active{outline:3px solid var(--pp-orange)}
+.sorter-card .num{position:absolute;top:-18px;left:0;font-size:11px;color:var(--muted)}

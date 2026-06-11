@@ -1,0 +1,116 @@
+/* ===== Ribbon ===== */
+#ribbon{flex:0 0 auto;background:var(--ribbon-bg);border-bottom:1px solid var(--line-strong)}
+.ribbon-tabs{
+  display:flex;height:32px;background:var(--tab-bar);padding:0 6px;align-items:flex-end;
+  border-bottom:1px solid var(--line);
+}
+.rtab{
+  border:0;background:transparent;padding:6px 13px;font-size:13px;color:var(--muted);
+  cursor:pointer;border-radius:4px 4px 0 0;height:30px;font-family:inherit;
+}
+.rtab:hover{background:var(--hover)}
+.rtab.active{color:var(--pp-orange);font-weight:600;border-bottom:2px solid var(--pp-orange);background:var(--ribbon-bg)}
+.rtab[data-tab="file"]{background:var(--pp-orange);color:#fff;border-radius:0;margin-right:4px}
+.rtab[data-tab="file"]:hover{background:var(--pp-orange-dark)}
+
+.ribbon-body{
+  display:flex;height:92px;padding:4px 4px 2px;gap:0;overflow-x:auto;overflow-y:hidden;
+}
+.rgroup{
+  display:flex;flex-direction:column;align-items:center;
+  padding:2px 8px;border-right:1px solid var(--line);min-width:max-content;
+}
+.rgroup-body{flex:1;display:flex;align-items:center;gap:3px}
+.rgroup-label{font-size:11px;color:var(--muted);height:14px;line-height:14px}
+
+/* Buttons */
+.rbtn{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  border:1px solid transparent;background:transparent;border-radius:4px;cursor:pointer;
+  padding:4px 7px;min-width:42px;font-family:inherit;font-size:11px;color:var(--text);gap:3px;
+}
+.rbtn:hover{background:var(--hover);border-color:var(--line)}
+.rbtn:active,.rbtn.toggled{background:var(--active);border-color:var(--line-strong)}
+.rbtn .ico{font-size:18px;line-height:1}
+.rbtn.big{min-height:64px}
+.rbtn.small{flex-direction:row;min-width:0;padding:3px 6px;gap:5px}
+.rbtn.small .ico{font-size:14px}
+
+/* Small button column (stack of 3) */
+.rstack{display:flex;flex-direction:column;gap:1px}
+.rstack .rbtn{flex-direction:row;justify-content:flex-start;min-width:96px;padding:2px 6px;height:21px}
+
+/* Font controls */
+.r-field{display:flex;align-items:center;gap:2px}
+select.r-select,input.r-input{
+  font-family:inherit;font-size:12px;border:1px solid var(--line-strong);background:#fff;
+  height:23px;border-radius:3px;padding:0 4px;color:var(--text);
+}
+select.r-font{width:118px}
+select.r-size,input.r-size{width:46px;text-align:center}
+.icon-btn{
+  width:24px;height:23px;border:1px solid transparent;background:transparent;border-radius:3px;
+  cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;color:var(--text);
+  position:relative;
+}
+.icon-btn:hover{background:var(--hover);border-color:var(--line)}
+.icon-btn.toggled{background:#cfe4ff;border-color:#9cc4f5}
+.icon-btn.bold{font-weight:700}
+.icon-btn.italic{font-style:italic}
+.icon-btn.underline{text-decoration:underline}
+.icon-btn.strike{text-decoration:line-through}
+
+/* color buttons with bar */
+.color-btn{display:flex;flex-direction:column;align-items:center;width:24px;height:23px;justify-content:center;cursor:pointer;border:1px solid transparent;border-radius:3px}
+.color-btn:hover{background:var(--hover);border-color:var(--line)}
+.color-btn .ico{font-size:12px;line-height:1}
+.color-btn .bar{width:16px;height:3px;margin-top:1px}
+
+/* Color popover */
+.color-pop{
+  position:fixed;z-index:6000;background:#fff;border:1px solid var(--line-strong);
+  box-shadow:0 4px 14px rgba(0,0,0,.18);border-radius:5px;padding:8px;
+}
+.swatch-grid{display:grid;grid-template-columns:repeat(10,16px);gap:3px}
+.swatch{width:16px;height:16px;border:1px solid rgba(0,0,0,.15);cursor:pointer;border-radius:2px}
+.swatch:hover{outline:2px solid var(--sel);outline-offset:1px}
+.color-pop .row-label{font-size:11px;color:var(--muted);margin:6px 0 3px}
+.color-pop .more{margin-top:8px;display:flex;gap:6px;align-items:center}
+
+/* dropdown menus from ribbon */
+.r-menu{
+  position:fixed;z-index:6000;background:#fff;border:1px solid var(--line-strong);
+  box-shadow:0 4px 14px rgba(0,0,0,.18);border-radius:5px;padding:5px;min-width:180px;
+}
+.r-menu .mi{display:flex;align-items:center;gap:8px;padding:6px 10px;cursor:pointer;border-radius:3px;font-size:13px}
+.r-menu .mi:hover{background:var(--hover)}
+.r-menu .mi .ico{width:18px;text-align:center}
+
+/* shape palette */
+.shape-grid{display:grid;grid-template-columns:repeat(8,26px);gap:3px;max-width:240px}
+.shape-cell{width:26px;height:26px;display:flex;align-items:center;justify-content:center;cursor:pointer;border-radius:3px;border:1px solid transparent}
+.shape-cell:hover{background:var(--hover);border-color:var(--line)}
+.shape-cell svg{width:20px;height:20px}
+
+/* design themes */
+.theme-strip{display:flex;gap:4px;align-items:center}
+.theme-chip{width:62px;height:36px;border:1px solid var(--line-strong);cursor:pointer;border-radius:2px;overflow:hidden;position:relative}
+.theme-chip:hover{outline:2px solid var(--sel)}
+
+/* transitions/animations strip */
+.fx-strip{display:flex;gap:4px;align-items:center;flex-wrap:wrap;max-height:80px;overflow:auto}
+.fx-chip{width:64px;height:54px;border:1px solid var(--line-strong);border-radius:4px;background:#fff;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:10px;color:var(--text)}
+.fx-chip:hover{background:var(--hover)}
+.fx-chip.active{outline:2px solid var(--pp-orange)}
+.fx-chip .ico{font-size:18px}
+
+/* File (backstage) menu */
+#backstage{position:fixed;inset:0;z-index:7000;background:var(--ribbon-bg);display:flex}
+#backstage .bs-side{width:200px;background:var(--pp-orange);color:#fff;padding:50px 0}
+#backstage .bs-item{padding:10px 24px;cursor:pointer;font-size:14px}
+#backstage .bs-item:hover{background:rgba(255,255,255,.12)}
+#backstage .bs-back{font-size:20px;padding:10px 24px;cursor:pointer}
+#backstage .bs-main{flex:1;padding:50px 40px}
+#backstage h1{font-weight:300;font-size:28px;margin:0 0 24px}
+#backstage .bs-card{display:inline-flex;flex-direction:column;width:150px;height:110px;border:1px solid var(--line-strong);background:#fff;margin:8px;cursor:pointer;align-items:center;justify-content:center;gap:8px}
+#backstage .bs-card:hover{outline:2px solid var(--pp-orange)}

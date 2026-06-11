@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PowerPoint</title>
+<link rel="stylesheet" href="css/styles.css">
+<link rel="stylesheet" href="css/ribbon.css">
+</head>
+<body>
+<div id="app">
+  <!-- ===== Title / Quick Access bar ===== -->
+  <div id="titlebar">
+    <div class="qat">
+      <button class="qat-btn" data-cmd="save" title="Save (Ctrl+S)">&#128190;</button>
+      <button class="qat-btn" data-cmd="undo" title="Undo (Ctrl+Z)">&#8630;</button>
+      <button class="qat-btn" data-cmd="redo" title="Redo (Ctrl+Y)">&#8631;</button>
+      <button class="qat-btn" data-cmd="present" title="Start from Beginning (F5)">&#9654;</button>
+    </div>
+    <div class="title-center"><span id="doc-title">Presentation1</span> &nbsp;&middot;&nbsp; PowerPoint</div>
+    <div class="title-right">
+      <span class="title-user">edwinang.email@gmail.com</span>
+    </div>
+  </div>
+
+  <!-- ===== Ribbon tabs ===== -->
+  <div id="ribbon">
+    <div class="ribbon-tabs" id="ribbon-tabs">
+      <button class="rtab" data-tab="file">File</button>
+      <button class="rtab active" data-tab="home">Home</button>
+      <button class="rtab" data-tab="insert">Insert</button>
+      <button class="rtab" data-tab="design">Design</button>
+      <button class="rtab" data-tab="transitions">Transitions</button>
+      <button class="rtab" data-tab="animations">Animations</button>
+      <button class="rtab" data-tab="slideshow">Slide Show</button>
+      <button class="rtab" data-tab="view">View</button>
+    </div>
+    <div class="ribbon-body" id="ribbon-body"><!-- groups injected by ribbon.js --></div>
+  </div>
+
+  <!-- ===== Main work area ===== -->
+  <div id="work">
+    <!-- Slide thumbnail panel -->
+    <div id="thumbs-panel">
+      <div id="thumbs" class="thumbs"></div>
+    </div>
+
+    <!-- Editing surface -->
+    <div id="editor">
+      <div id="canvas-scroll">
+        <div id="stage">
+          <div id="slide-canvas">
+            <div id="slide-bg"></div>
+            <div id="slide-objects"></div>
+            <div id="selection-layer"></div>
+            <div id="marquee"></div>
+          </div>
+        </div>
+      </div>
+      <!-- Notes pane -->
+      <div id="notes-pane">
+        <div class="notes-label">Click to add notes</div>
+        <textarea id="notes-area" placeholder="Click to add notes"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Status bar ===== -->
+  <div id="statusbar">
+    <div class="status-left">
+      <span id="status-slide">Slide 1 of 1</span>
+      <span id="status-msg"></span>
+    </div>
+    <div class="status-right">
+      <button class="view-btn" data-view="normal" title="Normal">&#9707;</button>
+      <button class="view-btn" data-view="sorter" title="Slide Sorter">&#9638;</button>
+      <button class="view-btn" data-cmd="present" title="Slide Show (F5)">&#9654;</button>
+      <div class="zoom">
+        <button id="zoom-out" title="Zoom Out">&minus;</button>
+        <input id="zoom-slider" type="range" min="25" max="400" value="100">
+        <button id="zoom-in" title="Zoom In">+</button>
+        <span id="zoom-label">100%</span>
+        <button id="zoom-fit" title="Fit slide to window">&#9974;</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Slideshow overlay ===== -->
+  <div id="slideshow" class="hidden">
+    <div id="show-stage"></div>
+    <div id="show-controls">
+      <button data-show="prev" title="Previous">&#9664;</button>
+      <button data-show="next" title="Next">&#9654;</button>
+      <button data-show="pen" title="Pen">&#9998;</button>
+      <button data-show="end" title="End Show (Esc)">&#10005;</button>
+    </div>
+  </div>
+
+  <!-- ===== Context menu ===== -->
+  <div id="context-menu" class="ctx hidden"></div>
+
+  <!-- ===== Hidden file input for image insert ===== -->
+  <input type="file" id="file-image" accept="image/*" class="hidden" multiple>
+  <input type="file" id="file-open" accept=".pptx.json,.json,application/json" class="hidden">
+</div>
+
+<script src="js/util.js"></script>
+<script src="js/state.js"></script>
+<script src="js/geometry.js"></script>
+<script src="js/render.js"></script>
+<script src="js/objects.js"></script>
+<script src="js/shapeops.js"></script>
+<script src="js/tables.js"></script>
+<script src="js/selection.js"></script>
+<script src="js/text.js"></script>
+<script src="js/clipboard.js"></script>
+<script src="js/ribbon.js"></script>
+<script src="js/contextmenu.js"></script>
+<script src="js/shortcuts.js"></script>
+<script src="js/slideshow.js"></script>
+<script src="js/io.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,8 @@
+# Playwright test artifacts
+.playwright-mcp/
+*.png
+
+# OS / editor cruft
+Thumbs.db
+.DS_Store
+*.log
