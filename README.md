@@ -46,8 +46,8 @@ PowerPoint keyboard shortcuts. **No install, no build step.**
 
 **Tables** (Insert ▸ Table — with **Table Design** & **Layout** contextual tabs)
 - Click/double-click into the table to **edit cells**; **Tab** moves to the next cell (auto-adds a row at the end).
-- **Insert/Delete** rows & columns, **6 table styles**, **Header Row / Banded Rows / First Column** toggles,
-  per-cell **shading**, and **border** color. Renders with proper header fill, banding and borders.
+- **Insert/Delete** rows & columns, **Merge / Split cells** (Shift+click to select a range), **6 table styles**,
+  **Header Row / Banded Rows / First Column** toggles, per-cell **shading**, and **border** color.
 
 **Multi-select / group resize**
 - Select several objects (or a group) and drag the bounding-box handles to **resize proportionally**
@@ -85,6 +85,8 @@ PowerPoint keyboard shortcuts. **No install, no build step.**
 **Slide Show**
 - Full-screen presentation (F5 / Shift+F5), click/keys to advance, transitions + animations play,
   on-screen controls, Esc to end.
+- **Presenter View** (`Alt+F5` or Slide Show ▸ Presenter View): current slide, **next-slide preview**,
+  **speaker notes**, an **elapsed timer** + clock, and slide-number nav — just like PowerPoint.
 
 **Files**
 - Auto-save to browser storage, **Save As** (download `.pptx.json`), **Open** a saved file,
@@ -143,7 +145,7 @@ js/app.js             bootstrap & wiring
 
 ## Known limitations (vs. real PowerPoint)
 - Save format is JSON (`.pptx.json`), not the binary OOXML `.pptx`.
-- Tables don't support merged/split cells yet; picture glow/soft-edges are CSS-filter approximations.
+- Picture glow/soft-edges are CSS-filter approximations.
 - SmartArt, embedded video, and master-slide editing are not yet implemented.
 
 These are the natural next steps if you want to keep extending it.

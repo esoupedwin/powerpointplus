@@ -181,6 +181,7 @@ body{
 /* Tables */
 .pp-table{width:100%;height:100%}
 .pp-table td{outline:none}
+.pp-table td.cell-sel{outline:2px solid var(--sel);outline-offset:-2px;background-image:linear-gradient(rgba(43,121,216,.18),rgba(43,121,216,.18))}
 .obj .pp-table{pointer-events:auto}
 
 /* Group (multi-select) bounding box */
@@ -232,6 +233,26 @@ body{
   width:34px;height:30px;border-radius:5px;
 }
 #show-controls button:hover{background:rgba(255,255,255,.2)}
+
+/* ---------- Presenter View ---------- */
+#slideshow.presenter-mode{background:#1b1b1b;cursor:default;align-items:stretch;justify-content:stretch}
+#presenter{position:absolute;inset:0;display:flex;flex-direction:column;color:#eee;font-family:"Segoe UI",sans-serif}
+.pv-top{height:46px;display:flex;align-items:center;justify-content:space-between;padding:0 22px;background:#000;flex:0 0 auto}
+#pv-elapsed{font-size:22px;font-variant-numeric:tabular-nums;color:#fff}
+.pv-top .pv-tip{font-size:12px;color:#9a9a9a}
+#pv-clock{font-size:18px;color:#cfcfcf;font-variant-numeric:tabular-nums}
+.pv-main{flex:1;display:flex;min-height:0;padding:18px;gap:18px}
+.pv-current-wrap{flex:1.6;display:flex;align-items:center;justify-content:center;background:#000;border-radius:4px;cursor:pointer;overflow:hidden}
+.pv-current{position:relative;box-shadow:0 0 0 1px #333}
+.pv-side{flex:1;display:flex;flex-direction:column;min-width:0}
+.pv-lbl{font-size:12px;color:#9a9a9a;margin:4px 2px}
+.pv-next{position:relative;background:#000;border-radius:4px;align-self:flex-start;overflow:hidden;box-shadow:0 0 0 1px #333;width:100%;height:38%}
+.pv-end{color:#888;padding:30px 16px;font-size:14px}
+.pv-notes{flex:1;background:#2a2a2a;border-radius:4px;margin-top:4px;padding:12px 14px;font-size:18px;line-height:1.5;color:#f0f0f0;overflow:auto;white-space:pre-wrap}
+.pv-controls{height:54px;flex:0 0 auto;display:flex;align-items:center;justify-content:center;gap:16px;background:#000}
+.pv-controls button{background:#333;border:0;color:#fff;border-radius:6px;cursor:pointer;font-size:16px;padding:7px 16px}
+.pv-controls button:hover{background:#4a4a4a}
+#pv-slidenum{font-size:15px;color:#cfcfcf;min-width:70px;text-align:center}
 
 /* ---------- Context menu ---------- */
 .ctx{

@@ -107,7 +107,7 @@
 
     // ----- function / nav keys -----
     switch (k) {
-      case 'F5': e.preventDefault(); e.shiftKey ? PP.startShow(S.current) : PP.startShow(0); return;
+      case 'F5': e.preventDefault(); if (e.altKey) PP.startPresenter(S.current); else if (e.shiftKey) PP.startShow(S.current); else PP.startShow(0); return;
       case 'F2': e.preventDefault(); if (S.selection.length) PP.beginTextEdit(S.selection[0]); return;
       case 'Escape': e.preventDefault(); if (PP.isFindOpen && PP.isFindOpen()) { PP.closeFind(); return; } if (PP.cancelArmed()) return; PP.clearSelection(); PP.hideMenus(); PP.emit('change'); return;
       case 'Delete':

@@ -9,6 +9,19 @@
   };
   function tableById(id) { const o = PP.findObj(id); return (o && o.type === 'table') ? o : null; }
 
+  // set of "r,c" cells hidden because an anchor merge covers them
+  function coveredSet(o) {
+    const cov = {};
+    if (!o.merges) return cov;
+    Object.keys(o.merges).forEach(function (k) {
+      const p = k.split(',').map(Number), m = o.merges[k];
+      for (let r = p[0]; r < p[0] + (m.rs || 1); r++)
+        for (let c = p[1]; c < p[1] + (m.cs || 1); c++)
+          if (!(r === p[0] && c === p[1])) cov[r + ',' + c] = true;
+    });
+    return cov;
+  }
+
   /* ---------- render ---------- */
   PP.tableHTML = function (o) {
     const editing = S.tableEditId === o.id;
@@ -22,13 +35,17 @@
     o.colW.forEach(function (w) { const col = document.createElement('col'); col.style.width = (w / totalW * 100) + '%'; cg.appendChild(col); });
     table.appendChild(cg);
 
+    const covered = coveredSet(o);
     const totalH = o.rowH.reduce(function (a, b) { return a + b; }, 0) || o.rows;
     for (let r = 0; r < o.rows; r++) {
       const tr = document.createElement('tr');
       tr.style.height = (o.rowH[r] / totalH * 100) + '%';
       for (let c = 0; c < o.cols; c++) {
+        if (covered[r + ',' + c]) continue; // hidden by a merge anchor
         const td = document.createElement('td');
         td.dataset.r = r; td.dataset.c = c;
+        const span = o.merges && o.merges[r + ',' + c];
+        if (span) { if (span.rs > 1) td.rowSpan = span.rs; if (span.cs > 1) td.colSpan = span.cs; }
         const isHeader = st.headerRow && r === 0;
         const isFirstCol = st.firstCol && c === 0;
         let bg = st.band2;
@@ -88,6 +105,19 @@
     tds.forEach(function (td) { o.cells[+td.dataset.r][+td.dataset.c] = td.innerText.replace(/\n$/, ''); });
   }
 
+  PP.highlightTableSel = function () {
+    if (!S.tableEditId) return;
+    const root = document.querySelector('#slide-objects .obj[data-id="' + S.tableEditId + '"]');
+    if (!root) return;
+    PP.$$('td', root).forEach(function (td) { td.classList.remove('cell-sel'); });
+    if (!S.tableSel) return;
+    const s = S.tableSel, r1 = Math.min(s.r1, s.r2), r2 = Math.max(s.r1, s.r2), c1 = Math.min(s.c1, s.c2), c2 = Math.max(s.c1, s.c2);
+    PP.$$('td', root).forEach(function (td) {
+      const r = +td.dataset.r, c = +td.dataset.c;
+      if (r >= r1 && r <= r2 && c >= c1 && c <= c2) td.classList.add('cell-sel');
+    });
+  };
+
   PP.initTables = function () {
     const root = document.getElementById('slide-objects');
     root.addEventListener('input', function (e) {
@@ -132,6 +162,7 @@
       o.w += o.w / (o.cols - 1);
     }
     if (o.cellFill) o.cellFill = null;
+    o.merges = null;
     commitTable(o, 'Insert');
   };
 
@@ -148,6 +179,7 @@
     } else if (what === 'col' && o.cols > 1) {
       o.cells.forEach(function (row) { row.splice(cell.c, 1); }); o.colW.splice(cell.c, 1); o.cols--;
     }
+    o.merges = null;
     commitTable(o, 'Delete');
   };
 
@@ -181,6 +213,44 @@
   PP.tableBorderColor = function (color) {
     const o = PP.selectedTable() || tableById(S.tableEditId); if (!o) return;
     o.tableStyle.border = color; commitTable(o, 'Border');
+  };
+
+  /* ---------- merged cells ---------- */
+  PP.tableMerge = function () {
+    const o = PP.selectedTable() || tableById(S.tableEditId); if (!o) return;
+    const sel = S.tableSel || (S.tableCell ? { r1: S.tableCell.r, c1: S.tableCell.c, r2: S.tableCell.r, c2: S.tableCell.c } : null);
+    if (!sel) { PP.status('Select cells to merge (Shift+click a second cell)'); return; }
+    const r1 = Math.min(sel.r1, sel.r2), r2 = Math.max(sel.r1, sel.r2);
+    const c1 = Math.min(sel.c1, sel.c2), c2 = Math.max(sel.c1, sel.c2);
+    if (r1 === r2 && c1 === c2) { PP.status('Select at least two cells to merge'); return; }
+    // combine text into anchor, clear the rest
+    const parts = [];
+    for (let r = r1; r <= r2; r++) for (let c = c1; c <= c2; c++) {
+      const v = (o.cells[r] && o.cells[r][c]) || ''; if (v) parts.push(v);
+      if (!(r === r1 && c === c1)) o.cells[r][c] = '';
+    }
+    o.cells[r1][c1] = parts.join(' ');
+    if (!o.merges) o.merges = {};
+    // remove any existing merges overlapping the range
+    Object.keys(o.merges).forEach(function (k) {
+      const p = k.split(',').map(Number), m = o.merges[k];
+      const er = p[0] + (m.rs || 1) - 1, ec = p[1] + (m.cs || 1) - 1;
+      if (!(p[0] > r2 || er < r1 || p[1] > c2 || ec < c1)) delete o.merges[k];
+    });
+    o.merges[r1 + ',' + c1] = { rs: r2 - r1 + 1, cs: c2 - c1 + 1 };
+    S.tableSel = null; S.tableCell = { r: r1, c: c1 };
+    commitTable(o, 'Merge Cells');
+  };
+  PP.tableSplit = function () {
+    const o = PP.selectedTable() || tableById(S.tableEditId); if (!o || !o.merges) return;
+    const cell = S.tableCell || { r: 0, c: 0 };
+    // find the anchor whose span contains this cell
+    let removed = false;
+    Object.keys(o.merges).forEach(function (k) {
+      const p = k.split(',').map(Number), m = o.merges[k];
+      if (cell.r >= p[0] && cell.r < p[0] + (m.rs || 1) && cell.c >= p[1] && cell.c < p[1] + (m.cs || 1)) { delete o.merges[k]; removed = true; }
+    });
+    if (removed) commitTable(o, 'Split Cells'); else PP.status('Selected cell is not merged');
   };
 
 })(window.PP);

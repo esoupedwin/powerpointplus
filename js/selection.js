@@ -437,7 +437,14 @@
       const tnode = e.target.closest('.obj');
       if (tnode && tnode.dataset.id === S.tableEditId) {
         const td = e.target.closest('td');
-        if (td) S.tableCell = { r: +td.dataset.r, c: +td.dataset.c };
+        if (td) {
+          const rc = { r: +td.dataset.r, c: +td.dataset.c };
+          if (e.shiftKey && S.tableCell) {
+            S.tableSel = { r1: S.tableCell.r, c1: S.tableCell.c, r2: rc.r, c2: rc.c };
+            e.preventDefault();
+            PP.highlightTableSel && PP.highlightTableSel();
+          } else { S.tableCell = rc; S.tableSel = null; PP.highlightTableSel && PP.highlightTableSel(); }
+        }
         return;
       }
       PP.endTableEdit();

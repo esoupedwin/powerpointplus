@@ -13,6 +13,7 @@
       case 'redo': PP.redo(); break;
       case 'present': PP.startShow(0); break;
       case 'presentCurrent': PP.startShow(S.current); break;
+      case 'presenterView': PP.startPresenter(S.current); break;
       case 'newSlide': PP.addSlide(PP.contentSlide()); break;
       case 'newSlideTitle': PP.addSlide(PP.titleSlide()); break;
       case 'duplicateSlide': PP.duplicateSlide(); break;
@@ -66,6 +67,8 @@
       case 'tblToggle': PP.tableToggle(arg); break;
       case 'tblShade': PP.tableShade(arg); break;
       case 'tblBorder': PP.tableBorderColor(arg); break;
+      case 'tblMerge': PP.tableMerge(); break;
+      case 'tblSplit': PP.tableSplit(); break;
       case 'insertChart': PP.insertChart(arg); break;
       case 'chartType': PP.chartSetType(arg); break;
       case 'chartData': PP.openChartData(); break;
@@ -528,6 +531,7 @@
   function buildSlideShow() {
     return [
       group('Start Slide Show', [bigBtn('&#9654;', 'From\nBeginning', 'present'), bigBtn('&#9655;', 'From\nCurrent', 'presentCurrent')]),
+      group('Presenter Tools', [bigBtn('&#128483;', 'Presenter\nView', 'presenterView')]),
       group('Set Up', [bigBtn('&#128362;', 'Rehearse', 'rehearse'), bigBtn('&#9745;', 'Use\nTimings', 'timings')]),
     ];
   }
@@ -730,11 +734,15 @@
       iconBtn('&#8597;', '', 'valign', 'middle', 'Align Middle'),
       iconBtn('&#8595;', '', 'valign', 'bottom', 'Align Bottom'),
     ]));
+    const merge = group('Merge', PP.el('div', { class: 'rstack' }, [
+      smallRow('&#9707;', 'Merge Cells', 'tblMerge'),
+      smallRow('&#9636;', 'Split Cells', 'tblSplit'),
+    ]));
     const arrange = group('Arrange', PP.el('div', { class: 'rstack' }, [
       smallRow('&#11014;', 'Bring Forward', 'forward'),
       smallRow('&#11015;', 'Send Backward', 'backward'),
     ]));
-    return [rowsCols, align, arrange];
+    return [rowsCols, merge, align, arrange];
   }
 
   /* ---------- Chart Design (contextual) ---------- */

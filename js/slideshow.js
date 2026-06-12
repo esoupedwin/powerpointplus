@@ -90,35 +90,73 @@
 
   PP.isShowOpen = function () { return !!show; };
 
-  PP.startShow = function (fromIndex) {
+  PP.startShow = function (fromIndex, presenter) {
     injectStyles();
-    show = { index: fromIndex || 0, pen: false };
+    show = { index: fromIndex || 0, pen: false, presenter: !!presenter, startedAt: nowMs() };
     const overlay = document.getElementById('slideshow');
     overlay.classList.remove('hidden');
+    overlay.classList.toggle('presenter-mode', !!presenter);
     if (overlay.requestFullscreen) overlay.requestFullscreen().catch(function () {});
     document.addEventListener('keydown', onShowKey, true);
     overlay.addEventListener('click', onShowClick);
     overlay.addEventListener('contextmenu', onShowRight);
     document.getElementById('show-controls').addEventListener('click', onCtl);
     window.addEventListener('resize', sizeShow);
+    if (presenter) timerId = setInterval(updateTimer, 500);
     renderShow(false);
   };
+  PP.startPresenter = function (fromIndex) { PP.startShow(fromIndex == null ? S.current : fromIndex, true); };
+
+  function nowMs() { try { return performance.now(); } catch (e) { return 0; } }
+  let timerId = null;
+  function updateTimer() {
+    const el = document.getElementById('pv-elapsed'); if (!el || !show) return;
+    const sec = Math.floor((nowMs() - show.startedAt) / 1000);
+    const h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60), s = sec % 60;
+    el.textContent = (h ? h + ':' : '') + String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+    const clk = document.getElementById('pv-clock');
+    if (clk) { const d = new Date(); clk.textContent = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); }
+  }
 
   function endShow() {
     if (!show) return;
+    if (timerId) { clearInterval(timerId); timerId = null; }
     document.removeEventListener('keydown', onShowKey, true);
     const overlay = document.getElementById('slideshow');
     overlay.classList.add('hidden');
+    overlay.classList.remove('presenter-mode');
     overlay.removeEventListener('click', onShowClick);
     overlay.removeEventListener('contextmenu', onShowRight);
     document.getElementById('show-controls').removeEventListener('click', onCtl);
     window.removeEventListener('resize', sizeShow);
+    const pv = document.getElementById('presenter'); if (pv) pv.remove();
+    document.getElementById('show-stage').style.display = '';
     if (document.fullscreenElement) document.exitFullscreen().catch(function () {});
     show = null;
     PP.goToSlide(S.current);
     PP.render();
   }
   PP.endShow = endShow;
+
+  // build a scaled slide node (shared by show + presenter + previews)
+  function buildSlideNode(index, animate) {
+    const slide = S.doc.slides[index];
+    const node = PP.el('div', { class: 'show-slide', style: 'position:absolute;top:0;left:0;width:' + PP.SLIDE_W + 'px;height:' + PP.SLIDE_H + 'px;transform-origin:top left;background:' + (slide.background || '#fff') });
+    slide.objects.forEach(function (o) {
+      const n = PP.objNode(o);
+      n.style.pointerEvents = 'none';
+      if (animate && o.animation) { n.classList.add('anim-' + o.animation); n.style.animationDelay = (0.15 * slide.objects.indexOf(o)) + 's'; }
+      node.appendChild(n);
+    });
+    return node;
+  }
+  function fitSlide(wrap, node, boxW, boxH) {
+    const scale = Math.min(boxW / PP.SLIDE_W, boxH / PP.SLIDE_H);
+    node.style.transform = 'scale(' + scale + ')';
+    wrap.style.width = (PP.SLIDE_W * scale) + 'px';
+    wrap.style.height = (PP.SLIDE_H * scale) + 'px';
+    wrap.innerHTML = ''; wrap.appendChild(node);
+  }
 
   function onCtl(e) {
     const b = e.target.closest('button'); if (!b) return;
@@ -131,6 +169,7 @@
   }
 
   function onShowClick(e) {
+    if (show && show.presenter) return; // presenter panes have their own handlers
     if (e.target.closest('#show-controls')) return;
     next();
   }
@@ -155,6 +194,7 @@
   }
 
   function sizeShow() {
+    if (show && show.presenter) { renderPresenter(); return; }
     const stage = document.getElementById('show-stage');
     const slide = stage.querySelector('.show-slide');
     if (!slide) return;
@@ -165,16 +205,10 @@
   }
 
   function renderShow(animate) {
+    if (show.presenter) { renderPresenter(); return; }
     const slide = S.doc.slides[show.index];
     const stage = document.getElementById('show-stage');
-    const node = PP.el('div', { class: 'show-slide', style: 'position:absolute;top:0;left:0;width:' + PP.SLIDE_W + 'px;height:' + PP.SLIDE_H + 'px;transform-origin:top left;background:' + (slide.background || '#fff') });
-    slide.objects.forEach(function (o) {
-      const n = PP.objNode(o);
-      n.style.pointerEvents = 'none';
-      if (o.animation) { n.classList.add('anim-' + o.animation); n.style.animationDelay = (0.15 * slide.objects.indexOf(o)) + 's'; }
-      node.appendChild(n);
-    });
-
+    const node = buildSlideNode(show.index, true);
     const trans = (animate && slide.transition && slide.transition.type) || 'none';
     stage.innerHTML = '';
     stage.appendChild(node);
@@ -182,6 +216,43 @@
     if (animate && trans !== 'none' && trans !== 'cut') {
       node.style.animation = 'show-' + trans + ' ' + (slide.transition.duration || 700) + 'ms ease';
     }
+  }
+
+  /* ---------- presenter view ---------- */
+  function renderPresenter() {
+    document.getElementById('show-stage').style.display = 'none';
+    const overlay = document.getElementById('slideshow');
+    let pv = document.getElementById('presenter');
+    if (!pv) {
+      pv = PP.el('div', { id: 'presenter' });
+      pv.innerHTML =
+        '<div class="pv-top"><span id="pv-elapsed">0:00</span>' +
+        '<span class="pv-tip">Tap the current slide or press → to advance</span>' +
+        '<span id="pv-clock"></span></div>' +
+        '<div class="pv-main"><div class="pv-current-wrap"><div class="pv-current"></div></div>' +
+        '<div class="pv-side"><div class="pv-lbl">Next slide</div><div class="pv-next"></div>' +
+        '<div class="pv-lbl">Notes</div><div class="pv-notes"></div></div></div>' +
+        '<div class="pv-controls"><button data-show="prev" title="Previous">&#9664;</button>' +
+        '<span id="pv-slidenum"></span>' +
+        '<button data-show="next" title="Next">&#9654;</button>' +
+        '<button data-show="end" title="End Show (Esc)">&#10005; End</button></div>';
+      overlay.appendChild(pv);
+      pv.querySelector('.pv-controls').addEventListener('click', onCtl);
+      pv.querySelector('.pv-current-wrap').addEventListener('click', function () { next(); });
+    }
+    // current slide
+    const curBox = pv.querySelector('.pv-current');
+    const cw = pv.querySelector('.pv-current-wrap').clientWidth - 20, ch = pv.querySelector('.pv-current-wrap').clientHeight - 20;
+    fitSlide(curBox, buildSlideNode(show.index, false), cw || 700, ch || 460);
+    // next slide
+    const nextBox = pv.querySelector('.pv-next');
+    if (show.index < S.doc.slides.length - 1) {
+      fitSlide(nextBox, buildSlideNode(show.index + 1, false), nextBox.clientWidth || 300, nextBox.clientHeight || 170);
+    } else { nextBox.innerHTML = '<div class="pv-end">End of slide show</div>'; nextBox.style.width = ''; nextBox.style.height = ''; }
+    // notes
+    pv.querySelector('.pv-notes').textContent = S.doc.slides[show.index].notes || '';
+    pv.querySelector('#pv-slidenum').textContent = (show.index + 1) + ' / ' + S.doc.slides.length;
+    updateTimer();
   }
 
   /* ---------- inject keyframes ---------- */
