@@ -631,7 +631,8 @@
       PP.beginTableEdit(hit.id, td ? +td.dataset.r : 0, td ? +td.dataset.c : 0);
       return;
     }
-    if (hit.type === 'text' || (hit.type !== 'image' && hit.type !== 'line' && hit.type !== 'arrow')) {
+    if (hit.type === 'chart') { PP.select(hit.id); PP.openChartData(hit.id); return; }
+    if (hit.type === 'text' || (hit.type !== 'image' && hit.type !== 'line' && hit.type !== 'arrow' && hit.type !== 'chart')) {
       PP.select(hit.id);
       PP.beginTextEdit(hit.id);
     }

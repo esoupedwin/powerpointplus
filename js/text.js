@@ -5,7 +5,7 @@
 
   let activeEditor = null;
 
-  function canHaveText(o) { return o && o.type !== 'image' && o.type !== 'line' && o.type !== 'arrow'; }
+  function canHaveText(o) { return o && o.type !== 'image' && o.type !== 'line' && o.type !== 'arrow' && o.type !== 'chart' && o.type !== 'table'; }
 
   PP.selectedTextObjs = function () { return PP.selectedObjs().filter(canHaveText); };
 

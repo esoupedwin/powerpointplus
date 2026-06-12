@@ -138,6 +138,46 @@ body{
 }
 .rotate-stem{position:absolute;width:1px;background:var(--sel);pointer-events:none}
 
+/* Modal dialogs */
+.modal-overlay{position:fixed;inset:0;z-index:8000;background:rgba(0,0,0,.28);display:flex;align-items:center;justify-content:center}
+.modal{background:#fff;border-radius:6px;box-shadow:0 10px 40px rgba(0,0,0,.3);min-width:360px;max-width:90vw;max-height:86vh;display:flex;flex-direction:column;overflow:hidden}
+.modal-title{background:var(--pp-orange);color:#fff;padding:10px 16px;font-size:14px;font-weight:600}
+.modal-body{padding:14px 16px;overflow:auto}
+.modal-btns{display:flex;justify-content:flex-end;gap:8px;padding:10px 16px;border-top:1px solid var(--line)}
+.btn-primary{background:var(--pp-orange);color:#fff;border:0;padding:6px 18px;border-radius:4px;cursor:pointer;font-family:inherit;font-size:13px}
+.btn-primary:hover{background:var(--pp-orange-dark)}
+.btn-secondary{background:#fff;color:var(--text);border:1px solid var(--line-strong);padding:6px 16px;border-radius:4px;cursor:pointer;font-family:inherit;font-size:13px}
+.btn-secondary:hover{background:var(--hover)}
+.modal label{font-size:13px}
+.modal input[type=text],.modal input:not([type]){border:1px solid var(--line-strong);border-radius:3px;padding:4px 6px;font-family:inherit;font-size:13px}
+
+/* Chart data grid */
+.chart-data .cd-grid-wrap{padding:14px 16px;overflow:auto}
+.cd-grid{border-collapse:collapse}
+.cd-grid th,.cd-grid td{border:1px solid var(--line);padding:2px}
+.cd-grid th{background:#f3f2f1}
+.cd-grid input{width:84px;border:0;padding:4px 6px;font-family:inherit;font-size:13px;background:transparent}
+.cd-grid input:focus{outline:2px solid var(--sel);background:#fff}
+.cd-grid td:first-child input,.cd-grid th input{width:100px}
+.cd-rm{border:0;background:transparent;color:#b00;cursor:pointer;font-size:13px;width:16px;line-height:1}
+.cd-rm:hover{color:#f00}
+.cd-add{border:1px dashed var(--line-strong);background:#fafafa;cursor:pointer;color:#3a7;width:22px;height:22px;border-radius:3px}
+.cd-add:hover{background:#eef}
+
+/* Find & Replace */
+.findbar{position:absolute;top:6px;right:18px;z-index:200;background:#fff;border:1px solid var(--line-strong);border-radius:5px;box-shadow:0 4px 14px rgba(0,0,0,.18);padding:8px;display:flex;flex-direction:column;gap:6px;width:300px}
+.findbar .row{display:flex;gap:6px;align-items:center}
+.findbar input{flex:1;border:1px solid var(--line-strong);border-radius:3px;padding:4px 6px;font-family:inherit;font-size:13px}
+.findbar button{border:1px solid var(--line-strong);background:#fff;border-radius:3px;cursor:pointer;padding:3px 8px;font-size:12px}
+.findbar button:hover{background:var(--hover)}
+.findbar .fr-count{font-size:11px;color:var(--muted);min-width:54px}
+.findbar .fr-close{border:0;font-size:15px;width:22px}
+
+/* Gridlines / guides overlay */
+#grid-overlay{position:absolute;inset:0;pointer-events:none;z-index:1}
+.guide-v{position:absolute;left:50%;top:0;bottom:0;border-left:1px dashed rgba(183,71,42,.7)}
+.guide-h{position:absolute;top:50%;left:0;right:0;border-top:1px dashed rgba(183,71,42,.7)}
+
 /* Tables */
 .pp-table{width:100%;height:100%}
 .pp-table td{outline:none}

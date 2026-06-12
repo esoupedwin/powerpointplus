@@ -66,6 +66,14 @@
       case 'tblToggle': PP.tableToggle(arg); break;
       case 'tblShade': PP.tableShade(arg); break;
       case 'tblBorder': PP.tableBorderColor(arg); break;
+      case 'insertChart': PP.insertChart(arg); break;
+      case 'chartType': PP.chartSetType(arg); break;
+      case 'chartData': PP.openChartData(); break;
+      case 'chartToggle': PP.chartToggle(arg); break;
+      case 'find': PP.openFindReplace(false); break;
+      case 'replace': PP.openFindReplace(true); break;
+      case 'gridlines': PP.toggleGridlines(); break;
+      case 'guides': PP.toggleGuidesView(); break;
       case 'flipH': flipSel('h'); break;
       case 'flipV': flipSel('v'); break;
       case 'rotate90': rotateSel(arg === 'left' ? -90 : 90); break;
@@ -451,12 +459,23 @@
       group('Slides', bigBtn('&#10010;', 'New\nSlide', 'newSlide')),
       group('Tables', bigBtn('&#9638;', 'Table', 'table')),
       group('Images', [bigBtn('&#128444;', 'Pictures', 'picture')]),
-      group('Illustrations', fullShapeButton()),
+      group('Illustrations', [fullShapeButton(), chartButton()]),
       group('Text', [bigBtn('&#65120;', 'Text\nBox', 'textBox'), bigBtn('&#9000;', 'Header\n& Footer', 'headerFooter'), bigBtn('&#127760;', 'WordArt', 'wordart')]),
       group('Symbols', [bigBtn('&#8721;', 'Equation', 'equation'), bigBtn('&#937;', 'Symbol', 'symbol')]),
       group('Media', bigBtn('&#9658;', 'Video', 'video')),
     ];
   }
+  function chartButton() {
+    const b = bigBtn('&#128202;', 'Chart', 'chart');
+    b.onclick = function () {
+      PP.openMenu(b, PP.CHART_TYPES.map(function (t) {
+        return { icon: chartIcon(t.id), label: t.name, run: function () { PP.insertChart(t.id); } };
+      }));
+    };
+    return b;
+  }
+  function chartIcon(id) { return { column: '&#128202;', bar: '&#9646;', line: '&#128200;', area: '&#9650;', pie: '&#9685;' }[id] || '&#128202;'; }
+
   function fullShapeButton() {
     const b = bigBtn('&#9733;', 'Shapes', 'shapesMenu');
     b.onclick = function () { PP.openShapesMenu(b); };
@@ -522,10 +541,17 @@
         bigBtn('&#128065;', 'Reading\nView', 'reading')
       ]),
       group('Zoom', [bigBtn('&#128269;', 'Zoom', 'zoomDlg'), bigBtn('&#9974;', 'Fit to\nWindow', 'fit')]),
-      group('Show', [PP.el('label', { style: 'font-size:12px;display:flex;gap:4px;align-items:center' }, [
-        PP.el('input', { type: 'checkbox', checked: 'checked', onchange: function () { toggleGuides(this.checked); } }), 'Guides'
-      ])]),
+      group('Show', PP.el('div', { style: 'display:flex;flex-direction:column;gap:3px' }, [
+        chk('Gridlines', !!S.showGrid, function () { PP.cmd('gridlines'); }),
+        chk('Guides', !!S.showGuides, function () { PP.cmd('guides'); }),
+      ])),
     ];
+  }
+  function chk(label, on, fn) {
+    const lbl = PP.el('label', { style: 'font-size:12px;display:flex;gap:5px;align-items:center;cursor:pointer' });
+    const cb = PP.el('input', { type: 'checkbox', onchange: fn }); if (on) cb.checked = true;
+    lbl.appendChild(cb); lbl.appendChild(document.createTextNode(label));
+    return lbl;
   }
   function viewBtn(icon, label, v) {
     const b = bigBtn(icon, label, 'view', v);
@@ -711,6 +737,34 @@
     return [rowsCols, align, arrange];
   }
 
+  /* ---------- Chart Design (contextual) ---------- */
+  function buildChartDesign() {
+    const o = PP.selectedChart ? PP.selectedChart() : null;
+    const dataGrp = group('Data', [
+      bigBtn('&#9638;', 'Edit\nData', 'chartData'),
+      smallRow('&#8635;', 'Refresh', 'chartData')
+    ]);
+    const typeGallery = PP.el('div', { class: 'fx-strip' });
+    PP.CHART_TYPES.forEach(function (t) {
+      const chip = PP.el('div', { class: 'fx-chip' + (o && o.chartType === t.id ? ' active' : ''), title: t.name,
+        onclick: function () { PP.cmd('chartType', t.id); } },
+        [PP.el('div', { class: 'ico', html: chartIcon(t.id) }), PP.el('span', { text: t.name.split(' ')[0] })]);
+      typeGallery.appendChild(chip);
+    });
+    const typeGrp = group('Type', typeGallery);
+    const opt = function (key, label) {
+      const lbl = PP.el('label', { style: 'font-size:12px;display:flex;gap:5px;align-items:center;cursor:pointer' });
+      const cb = PP.el('input', { type: 'checkbox', onchange: function () { PP.cmd('chartToggle', key); } });
+      if (!o || o[key] !== false) cb.checked = true;
+      lbl.appendChild(cb); lbl.appendChild(document.createTextNode(label));
+      return lbl;
+    };
+    const elems = group('Chart Elements', PP.el('div', { style: 'display:flex;flex-direction:column;gap:3px' }, [
+      opt('showTitle', 'Chart Title'), opt('showLegend', 'Legend'), opt('showGrid', 'Gridlines')
+    ]));
+    return [dataGrp, typeGrp, elems];
+  }
+
   /* ---------- render the active tab ---------- */
   PP.renderRibbon = function () {
     const body = document.getElementById('ribbon-body');
@@ -727,37 +781,42 @@
     else if (activeTab === 'pictureformat') groups = buildPictureFormat();
     else if (activeTab === 'tabledesign') groups = buildTableDesign();
     else if (activeTab === 'tablelayout') groups = buildTableLayout();
+    else if (activeTab === 'chartdesign') groups = buildChartDesign();
     groups.forEach(function (g) { body.appendChild(g); });
     PP.syncRibbonState();
   };
 
   /* ---------- contextual tab reveal ---------- */
-  let shapeTabBtn = null, picTabBtn = null, tblDesignBtn = null, tblLayoutBtn = null;
+  let shapeTabBtn = null, picTabBtn = null, tblDesignBtn = null, tblLayoutBtn = null, chartTabBtn = null;
   function ensureCtxTab() {
     if (shapeTabBtn) return;
     const tabs = document.getElementById('ribbon-tabs');
+    chartTabBtn = PP.el('button', { class: 'rtab ctx-tab', dataset: { tab: 'chartdesign' }, text: 'Chart Design', style: 'color:#b7472a;display:none' });
     tblDesignBtn = PP.el('button', { class: 'rtab ctx-tab', dataset: { tab: 'tabledesign' }, text: 'Table Design', style: 'color:#b7472a;display:none' });
     tblLayoutBtn = PP.el('button', { class: 'rtab ctx-tab', dataset: { tab: 'tablelayout' }, text: 'Layout', style: 'color:#b7472a;display:none' });
     picTabBtn = PP.el('button', { class: 'rtab ctx-tab', dataset: { tab: 'pictureformat' }, text: 'Picture Format', style: 'color:#b7472a;display:none' });
     shapeTabBtn = PP.el('button', { class: 'rtab ctx-tab', dataset: { tab: 'shapeformat' }, text: 'Shape Format', style: 'color:#b7472a;display:none' });
-    [tblDesignBtn, tblLayoutBtn, picTabBtn, shapeTabBtn].forEach(function (b) { tabs.appendChild(b); });
+    [chartTabBtn, tblDesignBtn, tblLayoutBtn, picTabBtn, shapeTabBtn].forEach(function (b) { tabs.appendChild(b); });
   }
   PP.updateContextualTab = function () {
     ensureCtxTab();
     const sel = PP.selectedObjs();
     const isTable = sel.length === 1 && sel[0].type === 'table';
-    const hasImg = !isTable && sel.length && sel.every(function (o) { return o.type === 'image'; });
-    const hasOther = !isTable && sel.length && sel.some(function (o) { return o.type !== 'image'; });
+    const isChart = sel.length === 1 && sel[0].type === 'chart';
+    const special = isTable || isChart;
+    const hasImg = !special && sel.length && sel.every(function (o) { return o.type === 'image'; });
+    const hasOther = !special && sel.length && sel.some(function (o) { return o.type !== 'image'; });
+    chartTabBtn.style.display = isChart ? '' : 'none';
     tblDesignBtn.style.display = isTable ? '' : 'none';
     tblLayoutBtn.style.display = isTable ? '' : 'none';
     picTabBtn.style.display = hasImg ? '' : 'none';
     shapeTabBtn.style.display = hasOther ? '' : 'none';
-    const ctx = ['pictureformat', 'shapeformat', 'tabledesign', 'tablelayout'];
+    const ctx = ['pictureformat', 'shapeformat', 'tabledesign', 'tablelayout', 'chartdesign'];
     if (ctx.indexOf(activeTab) >= 0) {
       const stillValid = (activeTab === 'pictureformat' && hasImg) || (activeTab === 'shapeformat' && hasOther) ||
-        ((activeTab === 'tabledesign' || activeTab === 'tablelayout') && isTable);
+        ((activeTab === 'tabledesign' || activeTab === 'tablelayout') && isTable) || (activeTab === 'chartdesign' && isChart);
       if (!stillValid) {
-        PP.gotoTab(isTable ? 'tabledesign' : hasImg ? 'pictureformat' : hasOther ? 'shapeformat' : 'home');
+        PP.gotoTab(isChart ? 'chartdesign' : isTable ? 'tabledesign' : hasImg ? 'pictureformat' : hasOther ? 'shapeformat' : 'home');
         return;
       }
       PP.renderRibbon();

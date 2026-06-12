@@ -191,6 +191,8 @@
       wrap.appendChild(imageContent(o));
     } else if (o.type === 'table') {
       wrap.appendChild(PP.tableHTML(o));
+    } else if (o.type === 'chart') {
+      wrap.appendChild(PP.chartSVG(o));
     } else {
       wrap.appendChild(shapeSVG(o));
       // shapes can also hold text
@@ -339,6 +341,7 @@
     if (S.view === 'sorter') { PP.renderSorter(); return; }
     PP.renderBackground();
     PP.renderObjects();
+    if (PP.renderOverlay) PP.renderOverlay();
     PP.renderSelection();
     PP.renderThumbs();
     PP.updateStatus();

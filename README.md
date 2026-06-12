@@ -31,6 +31,19 @@ PowerPoint keyboard shortcuts. **No install, no build step.**
   **align & distribute**, rotate/flip.
 - **Undo/redo** (full history), **copy/cut/paste/duplicate**, paste images from OS clipboard.
 
+**Charts** (Insert ▸ Chart — with a **Chart Design** contextual tab)
+- 5 chart types: **Clustered Column, Bar, Line, Area, Pie** (rendered as crisp SVG with axes,
+  gridlines, legend, category labels and pie % labels).
+- **Edit Data** — a PowerPoint-style spreadsheet grid: edit categories/series, add/delete rows & columns.
+- Switch chart type from the gallery; toggle **Chart Title / Legend / Gridlines**. Double-click a chart to edit its data.
+
+**Find & Replace** (`Ctrl+F` / `Ctrl+H`)
+- Searches text boxes **and** table cells across all slides; **Match case**, **Find Next/Previous**
+  (jumps to and selects the match), **Replace** / **Replace All** (preserves rich formatting where possible).
+
+**View ▸ Show**
+- **Gridlines** and center **Guides** toggles (drawing aids, like PowerPoint).
+
 **Tables** (Insert ▸ Table — with **Table Design** & **Layout** contextual tabs)
 - Click/double-click into the table to **edit cells**; **Tab** moves to the next cell (auto-adds a row at the end).
 - **Insert/Delete** rows & columns, **6 table styles**, **Header Row / Banded Rows / First Column** toggles,
@@ -115,6 +128,8 @@ js/render.js          paint slide, objects, selection, thumbnails, zoom
 js/objects.js         shape geometry (SVG paths) + insert helpers
 js/shapeops.js        Merge Shapes boolean engine (rasterize → contour → freeform)
 js/tables.js          table rendering, cell editing & row/col/style operations
+js/charts.js          chart objects: SVG rendering (5 types) + data-edit dialog
+js/find.js            Find & Replace + View overlays (gridlines/guides)
 js/selection.js       pointer interaction: select/move/resize/rotate/marquee/reorder
 js/text.js            in-place contenteditable text editing
 js/clipboard.js       copy/cut/paste/duplicate (+ OS image paste)
@@ -129,6 +144,6 @@ js/app.js             bootstrap & wiring
 ## Known limitations (vs. real PowerPoint)
 - Save format is JSON (`.pptx.json`), not the binary OOXML `.pptx`.
 - Tables don't support merged/split cells yet; picture glow/soft-edges are CSS-filter approximations.
-- Charts, SmartArt, embedded video, and master-slide editing are not yet implemented.
+- SmartArt, embedded video, and master-slide editing are not yet implemented.
 
 These are the natural next steps if you want to keep extending it.

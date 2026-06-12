@@ -80,6 +80,8 @@
         case 'v': e.preventDefault(); PP.paste(); return;
         case 'd': e.preventDefault(); PP.duplicate(); return;
         case 'a': e.preventDefault(); PP.selectAll(); return;
+        case 'f': e.preventDefault(); PP.openFindReplace(false); return;
+        case 'h': e.preventDefault(); PP.openFindReplace(true); return;
         case 's': e.preventDefault(); PP.save(); return;
         case 'o': e.preventDefault(); document.getElementById('file-open').click(); return;
         case 'm': e.preventDefault(); PP.addSlide(PP.contentSlide()); return;
@@ -107,7 +109,7 @@
     switch (k) {
       case 'F5': e.preventDefault(); e.shiftKey ? PP.startShow(S.current) : PP.startShow(0); return;
       case 'F2': e.preventDefault(); if (S.selection.length) PP.beginTextEdit(S.selection[0]); return;
-      case 'Escape': e.preventDefault(); if (PP.cancelArmed()) return; PP.clearSelection(); PP.hideMenus(); PP.emit('change'); return;
+      case 'Escape': e.preventDefault(); if (PP.isFindOpen && PP.isFindOpen()) { PP.closeFind(); return; } if (PP.cancelArmed()) return; PP.clearSelection(); PP.hideMenus(); PP.emit('change'); return;
       case 'Delete':
       case 'Backspace':
         e.preventDefault();
