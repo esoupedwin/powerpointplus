@@ -37,6 +37,13 @@ PowerPoint keyboard shortcuts. **No install, no build step.**
 - **Edit Data** — a PowerPoint-style spreadsheet grid: edit categories/series, add/delete rows & columns.
 - Switch chart type from the gallery; toggle **Chart Title / Legend / Gridlines**. Double-click a chart to edit its data.
 
+**SmartArt** (Insert ▸ SmartArt — with a **SmartArt Design** contextual tab)
+- 5 layouts: **Basic List, Process, Cycle, Hierarchy (org chart), Pyramid** — rendered with
+  themed node boxes and connectors/arrows.
+- **Type your text here** outline pane (double-click the graphic): each line is a shape;
+  **Tab / Shift+Tab** demote/promote for the Hierarchy tree; live preview as you type.
+- Switch layout from the gallery and **change colors** from the design tab.
+
 **Find & Replace** (`Ctrl+F` / `Ctrl+H`)
 - Searches text boxes **and** table cells across all slides; **Match case**, **Find Next/Previous**
   (jumps to and selects the match), **Replace** / **Replace All** (preserves rich formatting where possible).
@@ -131,6 +138,7 @@ js/objects.js         shape geometry (SVG paths) + insert helpers
 js/shapeops.js        Merge Shapes boolean engine (rasterize → contour → freeform)
 js/tables.js          table rendering, cell editing & row/col/style operations
 js/charts.js          chart objects: SVG rendering (5 types) + data-edit dialog
+js/smartart.js        SmartArt diagrams (5 layouts) + outline text-pane editor
 js/find.js            Find & Replace + View overlays (gridlines/guides)
 js/selection.js       pointer interaction: select/move/resize/rotate/marquee/reorder
 js/text.js            in-place contenteditable text editing
@@ -146,6 +154,6 @@ js/app.js             bootstrap & wiring
 ## Known limitations (vs. real PowerPoint)
 - Save format is JSON (`.pptx.json`), not the binary OOXML `.pptx`.
 - Picture glow/soft-edges are CSS-filter approximations.
-- SmartArt, embedded video, and master-slide editing are not yet implemented.
+- Embedded video/audio and master-slide/theme editing are not yet implemented; save is JSON, not binary `.pptx`.
 
 These are the natural next steps if you want to keep extending it.

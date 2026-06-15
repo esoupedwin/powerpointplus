@@ -193,6 +193,8 @@
       wrap.appendChild(PP.tableHTML(o));
     } else if (o.type === 'chart') {
       wrap.appendChild(PP.chartSVG(o));
+    } else if (o.type === 'smartart') {
+      wrap.appendChild(PP.smartartContent(o));
     } else {
       wrap.appendChild(shapeSVG(o));
       // shapes can also hold text

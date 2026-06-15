@@ -138,6 +138,13 @@ body{
 }
 .rotate-stem{position:absolute;width:1px;background:var(--sel);pointer-events:none}
 
+/* SmartArt */
+.sa-node{pointer-events:none;box-shadow:0 1px 2px rgba(0,0,0,.18)}
+.sa-pane{position:fixed;z-index:6500;width:240px;background:#fff;border:1px solid var(--line-strong);box-shadow:0 6px 22px rgba(0,0,0,.22);border-radius:6px;overflow:hidden}
+.sa-pane-title{background:var(--pp-orange);color:#fff;font-size:12px;font-weight:600;padding:7px 12px}
+.sa-pane-text{width:100%;height:180px;border:0;outline:none;resize:vertical;padding:10px 12px;font-family:inherit;font-size:14px;line-height:1.5;white-space:pre;color:var(--text)}
+.sa-pane-hint{font-size:10px;color:var(--muted);padding:6px 12px;border-top:1px solid var(--line)}
+
 /* Modal dialogs */
 .modal-overlay{position:fixed;inset:0;z-index:8000;background:rgba(0,0,0,.28);display:flex;align-items:center;justify-content:center}
 .modal{background:#fff;border-radius:6px;box-shadow:0 10px 40px rgba(0,0,0,.3);min-width:360px;max-width:90vw;max-height:86vh;display:flex;flex-direction:column;overflow:hidden}

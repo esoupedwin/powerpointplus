@@ -418,6 +418,7 @@
   function onCanvasDown(e) {
     if (e.button === 2) return; // context menu handled elsewhere
     PP.hideMenus();
+    if (PP.isTextPaneOpen && PP.isTextPaneOpen()) PP.closeTextPane();
     const sp = PP.screenToSlide(e.clientX, e.clientY);
 
     // special modes intercept first
@@ -639,7 +640,8 @@
       return;
     }
     if (hit.type === 'chart') { PP.select(hit.id); PP.openChartData(hit.id); return; }
-    if (hit.type === 'text' || (hit.type !== 'image' && hit.type !== 'line' && hit.type !== 'arrow' && hit.type !== 'chart')) {
+    if (hit.type === 'smartart') { PP.select(hit.id); PP.openTextPane(hit.id); return; }
+    if (hit.type === 'text' || (hit.type !== 'image' && hit.type !== 'line' && hit.type !== 'arrow' && hit.type !== 'chart' && hit.type !== 'smartart')) {
       PP.select(hit.id);
       PP.beginTextEdit(hit.id);
     }

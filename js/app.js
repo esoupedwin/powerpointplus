@@ -46,7 +46,7 @@
       PP.render();
     });
     PP.on('selection', function () { if (!S.editingId) { PP.renderSelection(); } PP.syncRibbonState(); });
-    PP.on('slidechange', function () { PP.render(); });
+    PP.on('slidechange', function () { if (PP.closeTextPane) PP.closeTextPane(); PP.render(); });
     PP.on('history', updateUndoRedo);
   }
 
