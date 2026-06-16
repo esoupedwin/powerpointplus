@@ -58,21 +58,23 @@
 
   /* ---------- format painter ---------- */
   const PAINT_PROPS = ['fill', 'stroke', 'strokeWidth', 'opacity', 'fontFamily', 'fontSize', 'color',
-    'bold', 'italic', 'underline', 'strike', 'align', 'valign', 'lineHeight', 'bullet'];
-  PP.startFormatPainter = function () {
+    'bold', 'italic', 'underline', 'strike', 'align', 'valign', 'lineHeight', 'bullet', 'effects', 'radius'];
+  let painterSticky = false;
+  PP.startFormatPainter = function (sticky) {
     const o = PP.selectedObjs()[0];
     if (!o) { PP.status('Select an object first'); return; }
     painter = {};
     PAINT_PROPS.forEach(function (p) { painter[p] = o[p]; });
+    painterSticky = !!sticky;
     document.getElementById('slide-canvas').style.cursor = 'copy';
-    PP.status('Format Painter: click an object to apply');
+    PP.status('Format Painter' + (sticky ? ' (locked — Esc to stop)' : '') + ': click an object to apply');
   };
   function applyPainter(target) {
-    PAINT_PROPS.forEach(function (p) { if (painter[p] !== undefined) target[p] = painter[p]; });
+    PAINT_PROPS.forEach(function (p) { if (painter[p] !== undefined) target[p] = PP.deepClone(painter[p]); });
     target.html = null; // let object-level styles cascade
     PP.commit('Format Painter');
   }
-  function stopPainter() { painter = null; document.getElementById('slide-canvas').style.cursor = ''; PP.status(''); }
+  function stopPainter() { painter = null; painterSticky = false; document.getElementById('slide-canvas').style.cursor = ''; PP.status(''); }
 
   PP.cancelArmed = function () {
     let was = !!(pending || painter);
@@ -453,11 +455,12 @@
 
     // armed draw-to-insert takes priority
     if (pending) { startDraw(sp, e); e.preventDefault(); return; }
-    // format painter: next click applies the copied style
+    // format painter: next click applies the copied style (sticky stays armed)
     if (painter) {
       const t = PP.topObjectAt(sp.x, sp.y);
       if (t) { PP.select(t.id); applyPainter(t); }
-      stopPainter(); e.preventDefault(); return;
+      if (!painterSticky) stopPainter();
+      e.preventDefault(); return;
     }
 
     if (handle) {
@@ -469,13 +472,13 @@
     const hit = PP.topObjectAt(sp.x, sp.y);
     if (hit) {
       let ids = hit.groupId ? PP.groupMembers(hit.groupId) : [hit.id];
-      if (e.shiftKey || e.ctrlKey) {
+      if (e.shiftKey) {                       // Shift adds to selection (PowerPoint)
         ids.forEach(function (id) { PP.select(id, true); });
       } else if (!PP.isSelected(hit.id)) {
         PP.select(ids);
       }
       PP.emit('change');
-      startMove(sp, e);
+      startMove(sp, e);                       // Ctrl held → drag makes a duplicate
       e.preventDefault();
     } else {
       if (!e.shiftKey) PP.clearSelection();
@@ -490,7 +493,7 @@
     drag = {
       mode: 'move', startX: sp.x, startY: sp.y,
       orig: objs.map(function (o) { return { o: o, x: o.x, y: o.y }; }),
-      moved: false, alt: e.altKey
+      moved: false, alt: e.altKey, ctrlDup: (e.ctrlKey || e.metaKey), dupDone: false
     };
   }
 
@@ -574,6 +577,19 @@
       let dx = sp.x - drag.startX, dy = sp.y - drag.startY;
       if (e.shiftKey) { if (Math.abs(dx) > Math.abs(dy)) dy = 0; else dx = 0; } // constrain
       drag.moved = drag.moved || Math.abs(dx) > 1 || Math.abs(dy) > 1;
+      // Ctrl+drag → leave originals in place and move a fresh duplicate
+      if (drag.ctrlDup && !drag.dupDone && drag.moved) {
+        drag.orig.forEach(function (rec) { rec.o.x = rec.x; rec.o.y = rec.y; });
+        const gidMap = {}, clones = [];
+        drag.orig.forEach(function (rec) {
+          const c = PP.deepClone(rec.o); c.id = PP.uid('obj');
+          if (c.groupId) { gidMap[c.groupId] = gidMap[c.groupId] || PP.uid('grp'); c.groupId = gidMap[c.groupId]; }
+          PP.slide().objects.push(c);
+          clones.push({ o: c, x: rec.x, y: rec.y });
+        });
+        PP.select(clones.map(function (c) { return c.o.id; }));
+        drag.orig = clones; drag.dupDone = true;
+      }
       // snap first object to guides
       const snap = computeSnap(drag.orig[0], dx, dy);
       dx += snap.dx; dy += snap.dy;
@@ -621,7 +637,7 @@
     if (d.mode === 'crop-resize' || d.mode === 'crop-move') { PP.status('Crop: Enter/click away to apply, Esc to cancel'); return; }
     if (d.mode === 'vertex' || d.mode === 'ephandle') { epts.o.path = PP.nodesToPath(epts.o.nodes); PP.commit('Edit Points'); return; }
     if (d.moved) {
-      PP.commit(d.mode === 'move' ? 'Move' : (d.mode === 'resize' || d.mode === 'group-resize') ? 'Resize' : 'Rotate');
+      PP.commit(d.mode === 'move' ? (d.dupDone ? 'Duplicate' : 'Move') : (d.mode === 'resize' || d.mode === 'group-resize') ? 'Resize' : 'Rotate');
     }
     PP.status('');
   }

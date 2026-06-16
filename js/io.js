@@ -84,6 +84,33 @@
     window.addEventListener('beforeunload', function (e) {
       if (S.dirty) { e.preventDefault(); e.returnValue = ''; }
     });
+
+    // drag-and-drop image files from the desktop onto the slide
+    const scroll = document.getElementById('canvas-scroll');
+    scroll.addEventListener('dragover', function (e) {
+      if (e.dataTransfer && Array.prototype.indexOf.call(e.dataTransfer.types, 'Files') >= 0) {
+        e.preventDefault(); e.dataTransfer.dropEffect = 'copy';
+      }
+    });
+    scroll.addEventListener('drop', function (e) {
+      if (!e.dataTransfer || !e.dataTransfer.files.length) return;
+      e.preventDefault();
+      const sp = PP.screenToSlide(e.clientX, e.clientY);
+      Array.prototype.forEach.call(e.dataTransfer.files, function (file, i) {
+        if (file.type.indexOf('image') !== 0) return;
+        const reader = new FileReader();
+        reader.onload = function (ev) {
+          const img = new Image();
+          img.onload = function () {
+            const o = PP.insertImageFromDataURL(ev.target.result, img.width, img.height);
+            o.x = sp.x - o.w / 2 + i * 18; o.y = sp.y - o.h / 2 + i * 18;
+            PP.commit('Insert Picture'); PP.render();
+          };
+          img.src = ev.target.result;
+        };
+        reader.readAsDataURL(file);
+      });
+    });
   };
 
 })(window.PP);

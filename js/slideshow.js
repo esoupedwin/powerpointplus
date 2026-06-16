@@ -146,6 +146,14 @@
       const n = PP.objNode(o);
       n.style.pointerEvents = 'none';
       if (animate && o.animation) { n.classList.add('anim-' + o.animation); n.style.animationDelay = (0.15 * slide.objects.indexOf(o)) + 's'; }
+      if (o.hyperlink) {
+        n.style.pointerEvents = 'auto'; n.style.cursor = 'pointer';
+        n.addEventListener('click', function (ev) {
+          ev.stopPropagation();
+          if (o.hyperlink.slide != null) { show.index = PP.clamp(o.hyperlink.slide, 0, S.doc.slides.length - 1); renderShow(true); }
+          else if (o.hyperlink.url) window.open(o.hyperlink.url, '_blank');
+        });
+      }
       node.appendChild(n);
     });
     return node;

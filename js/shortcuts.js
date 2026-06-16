@@ -81,6 +81,7 @@
         case 'd': e.preventDefault(); PP.duplicate(); return;
         case 'a': e.preventDefault(); PP.selectAll(); return;
         case 'f': e.preventDefault(); PP.openFindReplace(false); return;
+        case 'k': e.preventDefault(); PP.openHyperlink(); return;
         case 'h': e.preventDefault(); PP.openFindReplace(true); return;
         case 's': e.preventDefault(); PP.save(); return;
         case 'o': e.preventDefault(); document.getElementById('file-open').click(); return;

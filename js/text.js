@@ -40,6 +40,8 @@
     editor.addEventListener('mousedown', stop);
     editor.addEventListener('dblclick', stop);
     editor.addEventListener('keydown', onKeyDown);
+    editor.addEventListener('mouseup', function () { setTimeout(updateMini, 0); });
+    editor.addEventListener('keyup', function () { setTimeout(updateMini, 0); });
     document.addEventListener('selectionchange', onSelChange);
 
     setTimeout(function () {
@@ -91,6 +93,7 @@
     function onSelChange() {
       if (S.editingId !== id) return;
       PP.syncRibbonState();
+      updateMini();
     }
     PP._detachSel = function () { document.removeEventListener('selectionchange', onSelChange); };
   };
@@ -106,8 +109,49 @@
     node.style.marginLeft = next + 'em';
   }
 
+  /* ---------- mini formatting toolbar (appears over a text selection) ---------- */
+  let mini = null;
+  function ensureMini() {
+    if (mini) return mini;
+    mini = PP.el('div', { class: 'mini-toolbar' });
+    const b = function (html, cmd, arg, title, cls) {
+      return PP.el('button', { class: 'mini-btn ' + (cls || ''), title: title || '', html: html, dataset: { cmd: cmd, arg: arg == null ? '' : arg } });
+    };
+    [b('B', 'bold', '', 'Bold', 'b'), b('I', 'italic', '', 'Italic', 'i'), b('U', 'underline', '', 'Underline', 'u'),
+     b('A&#9650;', 'growFont', '', 'Grow Font'), b('A&#9660;', 'shrinkFont', '', 'Shrink Font'),
+     b('A', '__color', '', 'Font Color', 'color'), b('&#9609;', '__hl', '', 'Highlight', 'hl'),
+     b('&#8226;&#8801;', 'bullet', 'disc', 'Bullets')].forEach(function (x) { mini.appendChild(x); });
+    mini.addEventListener('mousedown', function (e) { e.preventDefault(); }); // keep the text selection
+    mini.addEventListener('click', function (e) {
+      const btn = e.target.closest('button'); if (!btn) return;
+      const cmd = btn.dataset.cmd;
+      if (cmd === '__color') { PP.openColorPopover(btn, 'fontColor', function (c) { PP.cmd('fontColor', c); }); return; }
+      if (cmd === '__hl') { PP.openColorPopover(btn, 'highlight', function (c) { PP.cmd('highlight', c); }); return; }
+      PP.cmd(cmd, btn.dataset.arg); setTimeout(updateMini, 0);
+    });
+    document.body.appendChild(mini);
+    const sc = document.getElementById('canvas-scroll'); if (sc) sc.addEventListener('scroll', hideMini);
+    return mini;
+  }
+  function updateMini() {
+    if (!S.editingId) { hideMini(); return; }
+    const sel = window.getSelection();
+    if (!sel || !sel.rangeCount || sel.isCollapsed) { hideMini(); return; }
+    const r = sel.getRangeAt(0).getBoundingClientRect();
+    if (!r.width && !r.height) { hideMini(); return; }
+    const m = ensureMini(); m.style.display = 'flex';
+    let left = r.left + r.width / 2 - m.offsetWidth / 2;
+    let top = r.top - m.offsetHeight - 8;
+    if (top < 4) top = r.bottom + 8;
+    m.style.left = Math.max(6, Math.min(left, innerWidth - m.offsetWidth - 6)) + 'px';
+    m.style.top = top + 'px';
+  }
+  function hideMini() { if (mini) mini.style.display = 'none'; }
+  PP.updateMiniToolbar = updateMini; PP.hideMiniToolbar = hideMini;
+
   PP.endTextEdit = function () {
     if (!S.editingId) return;
+    hideMini();
     const o = PP.findObj(S.editingId);
     const node = document.querySelector('#slide-objects .obj[data-id="' + S.editingId + '"]');
     if (node) {

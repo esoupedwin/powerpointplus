@@ -20,12 +20,16 @@ PowerPoint keyboard shortcuts. **No install, no build step.**
   **draw-to-create** (pick a shape, then drag a crosshair to draw it, exactly like PowerPoint;
   a single click drops a default size).
 - **Move / resize / rotate** with live handles & rotation handle; **Shift** = constrain/aspect,
-  **Ctrl** = resize from center; multi-select **marquee**; **smart alignment guides** with snapping.
+  **Ctrl** = resize from center; **Ctrl+drag = duplicate**; **Shift+click** to multi-select;
+  marquee select; **smart alignment guides** with snapping.
+- **Drag-and-drop image files** from the desktop straight onto a slide.
+- **Hyperlinks** (`Ctrl+K`) on any object — link to a web URL or another slide; clickable in the show.
+- **Mini formatting toolbar** floats above selected text (bold/italic/underline, size, color, highlight, bullets).
 - **Rich, per-character text editing** — select any run and change font, size,
   **bold/italic/underline/strike**, font color, highlight; paragraph alignment (L/C/R/J),
   vertical align, **multi-level bullets/numbering** with **Tab/Shift+Tab** to demote/promote.
   Toolbar reflects the formatting at the caret. **Type-to-edit**: select a shape and just start typing.
-- **Format Painter** (copy one object's look onto another).
+- **Format Painter** (copy one object's look onto another; **double-click to lock** for repeated use).
 - Shape **fill** & **outline** colors (theme + standard palettes + custom picker).
 - **Group / ungroup** (`Ctrl+G` / `Ctrl+Shift+G`), **Z-order** (front/back/forward/backward),
   **align & distribute**, rotate/flip.
@@ -113,6 +117,9 @@ PowerPoint keyboard shortcuts. **No install, no build step.**
 | Align L / C / R / Justify | `Ctrl+L` / `Ctrl+E` / `Ctrl+R` / `Ctrl+J` |
 | Grow / shrink font | `Ctrl+]` / `Ctrl+[` (or `Ctrl+Shift+>` / `<`) |
 | Group / ungroup | `Ctrl+G` / `Ctrl+Shift+G` |
+| Find / Replace | `Ctrl+F` / `Ctrl+H` |
+| Hyperlink | `Ctrl+K` |
+| Duplicate by dragging | `Ctrl`+drag an object |
 | Edit text in object | `Enter`, `F2`, or just start typing (Esc to finish) |
 | Demote / promote bullet | `Tab` / `Shift+Tab` (while editing) |
 | Nudge / fine-nudge | Arrow keys / `Ctrl`+Arrows |

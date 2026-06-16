@@ -356,12 +356,16 @@
 
   /* ---------- tab definitions ---------- */
   function buildHome() {
+    const fpBtn = PP.el('button', { class: 'rbtn small', title: 'Format Painter (double-click to lock)',
+      onclick: function () { PP.startFormatPainter(false); },
+      ondblclick: function () { PP.startFormatPainter(true); } },
+      [PP.el('span', { class: 'ico', html: '&#128396;' }), PP.el('span', { text: 'Format' })]);
     const clipboard = group('Clipboard', [
       bigBtn('&#128203;', 'Paste', 'paste'),
       PP.el('div', { class: 'rstack' }, [
         smallRow('&#9986;', 'Cut', 'cut'),
         smallRow('&#128203;', 'Copy', 'copy'),
-        smallRow('&#128396;', 'Format', 'formatPainter')
+        fpBtn
       ])
     ]);
 

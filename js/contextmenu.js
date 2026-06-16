@@ -174,6 +174,8 @@
       } else if (so && so.type !== 'text' && so.type !== 'line' && so.type !== 'arrow') {
         items.push(mi('Edit Points', 'fn', function () { PP.beginEditPoints(so.id); }));
       }
+      items.push('-');
+      items.push(mi('Link…', 'fn', function () { PP.openHyperlink(); }, 'Ctrl+K'));
       items.push(mi('Edit Text', 'fn', function () { PP.beginTextEdit(S.selection[0]); }));
     } else {
       items.push(mi('Paste', 'cmd', 'paste', 'Ctrl+V'));
@@ -316,6 +318,39 @@
     }
     PP.$$('.view-btn').forEach(function (b) { b.classList.toggle('active', b.dataset.view === v); });
     PP.render();
+  };
+
+  /* ---------- hyperlink dialog ---------- */
+  PP.openHyperlink = function () {
+    const o = PP.selectedObjs()[0];
+    if (!o) { PP.status('Select an object to link'); return; }
+    const cur = o.hyperlink || {};
+    const overlay = PP.el('div', { class: 'modal-overlay' });
+    const dlg = PP.el('div', { class: 'modal', style: 'min-width:420px' });
+    dlg.appendChild(PP.el('div', { class: 'modal-title', text: 'Insert Hyperlink' }));
+    const body = PP.el('div', { class: 'modal-body', style: 'display:flex;flex-direction:column;gap:10px' });
+    const url = PP.el('input', { type: 'text', placeholder: 'https://example.com', value: cur.url || '', style: 'width:100%' });
+    const slide = PP.el('input', { type: 'number', min: '1', max: String(S.doc.slides.length), placeholder: '#', value: cur.slide != null ? (cur.slide + 1) : '', style: 'width:80px' });
+    body.appendChild(PP.el('label', { text: 'Address (web URL):' }));
+    body.appendChild(url);
+    body.appendChild(PP.el('label', { text: 'Or link to slide number:' }));
+    body.appendChild(slide);
+    dlg.appendChild(body);
+    const btns = PP.el('div', { class: 'modal-btns' });
+    if (o.hyperlink) btns.appendChild(PP.el('button', { class: 'btn-secondary', text: 'Remove Link', onclick: function () { o.hyperlink = null; PP.commit('Remove Hyperlink'); overlay.remove(); } }));
+    btns.appendChild(PP.el('button', { class: 'btn-secondary', text: 'Cancel', onclick: function () { overlay.remove(); } }));
+    btns.appendChild(PP.el('button', { class: 'btn-primary', text: 'OK', onclick: function () {
+      const sv = slide.value ? Math.max(1, Math.min(S.doc.slides.length, parseInt(slide.value))) - 1 : null;
+      if (sv != null) o.hyperlink = { slide: sv };
+      else if (url.value.trim()) { let u = url.value.trim(); if (!/^[a-z]+:/i.test(u)) u = 'https://' + u; o.hyperlink = { url: u }; }
+      else o.hyperlink = null;
+      PP.commit('Hyperlink'); overlay.remove();
+    } }));
+    dlg.appendChild(btns);
+    overlay.appendChild(dlg);
+    overlay.addEventListener('mousedown', function (e) { if (e.target === overlay) overlay.remove(); });
+    document.body.appendChild(overlay);
+    setTimeout(function () { url.focus(); }, 0);
   };
 
   /* ---------- backstage (File menu) ---------- */
