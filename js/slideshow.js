@@ -141,7 +141,7 @@
   // build a scaled slide node (shared by show + presenter + previews)
   function buildSlideNode(index, animate) {
     const slide = S.doc.slides[index];
-    const node = PP.el('div', { class: 'show-slide', style: 'position:absolute;top:0;left:0;width:' + PP.SLIDE_W + 'px;height:' + PP.SLIDE_H + 'px;transform-origin:top left;background:' + (slide.background || '#fff') });
+    const node = PP.el('div', { class: 'show-slide', style: 'position:absolute;top:0;left:0;width:' + PP.SLIDE_W + 'px;height:' + PP.SLIDE_H + 'px;transform-origin:top left;background:' + (PP.bgCSS ? PP.bgCSS(slide.background) : (slide.background || '#fff')) });
     slide.objects.forEach(function (o) {
       const n = PP.objNode(o);
       n.style.pointerEvents = 'none';

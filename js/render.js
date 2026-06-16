@@ -82,6 +82,42 @@
     return div;
   }
 
+  // Resolve a fill that may be a solid color string or a gradient object.
+  // Injects gradient <defs> into the given svg and returns the paint value.
+  let _gradSeq = 0;
+  function resolveFill(svg, ns, fill) {
+    if (fill === 'none' || fill == null) return 'none';
+    if (typeof fill === 'string') return fill;
+    // gradient object: { type:'linear'|'radial', angle, stops:[{c,p}] }
+    const id = 'g' + (++_gradSeq);
+    const grad = document.createElementNS(ns, fill.type === 'radial' ? 'radialGradient' : 'linearGradient');
+    grad.setAttribute('id', id);
+    if (fill.type !== 'radial') {
+      const a = (fill.angle == null ? 90 : fill.angle) * Math.PI / 180;
+      const x = Math.cos(a) / 2, y = Math.sin(a) / 2;
+      grad.setAttribute('x1', 0.5 - x); grad.setAttribute('y1', 0.5 - y);
+      grad.setAttribute('x2', 0.5 + x); grad.setAttribute('y2', 0.5 + y);
+    } else { grad.setAttribute('cx', '0.5'); grad.setAttribute('cy', '0.5'); grad.setAttribute('r', '0.6'); }
+    (fill.stops || []).forEach(function (s) {
+      const st = document.createElementNS(ns, 'stop');
+      st.setAttribute('offset', (s.p * 100) + '%'); st.setAttribute('stop-color', s.c);
+      grad.appendChild(st);
+    });
+    let defs = svg.querySelector('defs');
+    if (!defs) { defs = document.createElementNS(ns, 'defs'); svg.appendChild(defs); }
+    defs.appendChild(grad);
+    return 'url(#' + id + ')';
+  }
+  PP.isGradient = function (f) { return f && typeof f === 'object'; };
+  function bgCSS(b) { return PP.isGradient(b) ? PP.gradientCSS(b) : (b || '#fff'); }
+  PP.bgCSS = bgCSS;
+  PP.gradientCSS = function (g) {
+    if (typeof g === 'string') return g;
+    const stops = (g.stops || []).map(function (s) { return s.c + ' ' + (s.p * 100) + '%'; }).join(', ');
+    if (g.type === 'radial') return 'radial-gradient(circle at 50% 50%, ' + stops + ')';
+    return 'linear-gradient(' + ((g.angle == null ? 90 : g.angle) + 90) + 'deg, ' + stops + ')';
+  };
+
   function shapeSVG(o) {
     const ns = 'http://www.w3.org/2000/svg';
     const svg = document.createElementNS(ns, 'svg');
@@ -95,7 +131,7 @@
       svg.setAttribute('viewBox', '0 0 1 1');
       const node = document.createElementNS(ns, 'path');
       node.setAttribute('d', o.nodes ? PP.nodesToPath(o.nodes, o.closed) : o.path);
-      node.setAttribute('fill', o.fill === 'none' ? 'none' : o.fill);
+      node.setAttribute('fill', resolveFill(svg, ns, o.fill));
       node.setAttribute('fill-rule', o.fillRule || 'nonzero');
       node.setAttribute('stroke', o.stroke === 'none' ? 'none' : o.stroke);
       node.setAttribute('stroke-width', (o.strokeWidth || 0));
@@ -117,7 +153,7 @@
     } else {
       node = document.createElementNS(ns, 'path');
       node.setAttribute('d', path.d);
-      node.setAttribute('fill', o.fill === 'none' ? 'none' : o.fill);
+      node.setAttribute('fill', resolveFill(svg, ns, o.fill));
       node.setAttribute('stroke', o.stroke === 'none' ? 'none' : o.stroke);
       node.setAttribute('stroke-width', o.strokeWidth || 0);
       node.setAttribute('vector-effect', 'non-scaling-stroke');
@@ -228,7 +264,8 @@
   PP.renderBackground = function () {
     const bg = elBg();
     const s = PP.slide();
-    if (s.background && s.background.indexOf('gradient') >= 0) bg.style.background = s.background;
+    if (PP.isGradient(s.background)) bg.style.background = PP.gradientCSS(s.background);
+    else if (s.background && s.background.indexOf && s.background.indexOf('gradient') >= 0) bg.style.background = s.background;
     else bg.style.background = s.background || '#FFFFFF';
   };
 
@@ -368,7 +405,7 @@
       const render = PP.el('div', { class: 'thumb-render' });
       render.style.width = PP.SLIDE_W + 'px';
       render.style.height = PP.SLIDE_H + 'px';
-      render.style.background = slide.background || '#fff';
+      render.style.background = bgCSS(slide.background);
       // scale to thumb width (~170px) — set after attach
       slide.objects.forEach(function (o) {
         const n = PP.objNode(o);
@@ -394,7 +431,7 @@
     S.doc.slides.forEach(function (slide, i) {
       const card = PP.el('div', { class: 'sorter-card' + (i === S.current ? ' active' : ''), dataset: { idx: i } });
       card.appendChild(PP.el('div', { class: 'num', text: String(i + 1) }));
-      const render = PP.el('div', { class: 'thumb-render', style: 'width:' + PP.SLIDE_W + 'px;height:' + PP.SLIDE_H + 'px;background:' + (slide.background || '#fff') });
+      const render = PP.el('div', { class: 'thumb-render', style: 'width:' + PP.SLIDE_W + 'px;height:' + PP.SLIDE_H + 'px;background:' + bgCSS(slide.background) });
       slide.objects.forEach(function (o) {
         const n = PP.objNode(o); n.style.pointerEvents = 'none'; render.appendChild(n);
       });

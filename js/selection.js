@@ -593,9 +593,13 @@
       // snap first object to guides
       const snap = computeSnap(drag.orig[0], dx, dy);
       dx += snap.dx; dy += snap.dy;
+      // equal-spacing snap on axes that didn't align-snap
+      const space = computeSpacing(drag.orig[0], dx, dy);
+      if (snap.dx === 0) dx += space.dx;
+      if (snap.dy === 0) dy += space.dy;
       drag.orig.forEach(function (rec) { rec.o.x = rec.x + dx; rec.o.y = rec.y + dy; });
-      showGuides(snap.guides);
       PP.renderObjects(); PP.renderSelection();
+      showGuides(snap.guides, space.markers);   // after renderSelection so guides aren't wiped
       PP.status('Position ' + Math.round(drag.orig[0].o.x) + ', ' + Math.round(drag.orig[0].o.y));
     } else if (drag.mode === 'draw') {
       drawUpdate(sp, e);
@@ -683,16 +687,80 @@
     return { dx: snapDx, dy: snapDy, guides: guides.filter(function (g) { return (g.axis === 'x' && Math.abs((g.pos) - (moving.x + snapDx)) < 2) || true; }) };
   }
 
+  // Detect equal spacing between the moving object and flanking objects (PowerPoint smart guide)
+  function computeSpacing(rec, dx, dy) {
+    const o = rec.o;
+    const moving = { x: rec.x + dx, y: rec.y + dy, w: o.w, h: o.h };
+    const others = PP.slide().objects.filter(function (x) { return !PP.isSelected(x.id); });
+    const res = { dx: 0, dy: 0, markers: [] };
+    // horizontal: neighbours that vertically overlap the moving object
+    const row = others.filter(function (x) { return !(x.y > moving.y + moving.h || x.y + x.h < moving.y); });
+    let L = null, R = null;
+    row.forEach(function (x) {
+      if (x.x + x.w <= moving.x + 1) { if (!L || x.x + x.w > L.x + L.w) L = x; }
+      if (x.x >= moving.x + moving.w - 1) { if (!R || x.x < R.x) R = x; }
+    });
+    if (L && R) {
+      const targetLeft = (L.x + L.w + R.x - moving.w) / 2;
+      const dd = targetLeft - moving.x;
+      if (Math.abs(dd) < SNAP * 1.6) {
+        res.dx = dd;
+        const my = moving.y + moving.h / 2;
+        res.markers.push({ axis: 'h', y: my, a: L.x + L.w, b: targetLeft });
+        res.markers.push({ axis: 'h', y: my, a: targetLeft + moving.w, b: R.x });
+      }
+    }
+    // vertical
+    const col = others.filter(function (x) { return !(x.x > moving.x + moving.w || x.x + x.w < moving.x); });
+    let T = null, B = null;
+    col.forEach(function (x) {
+      if (x.y + x.h <= moving.y + 1) { if (!T || x.y + x.h > T.y + T.h) T = x; }
+      if (x.y >= moving.y + moving.h - 1) { if (!B || x.y < B.y) B = x; }
+    });
+    if (T && B) {
+      const targetTop = (T.y + T.h + B.y - moving.h) / 2;
+      const dd = targetTop - moving.y;
+      if (Math.abs(dd) < SNAP * 1.6) {
+        res.dy = dd;
+        const mx = moving.x + moving.w / 2;
+        res.markers.push({ axis: 'v', x: mx, a: T.y + T.h, b: targetTop });
+        res.markers.push({ axis: 'v', x: mx, a: targetTop + moving.h, b: B.y });
+      }
+    }
+    return res;
+  }
+
   let guideEls = [];
-  function showGuides(guides) {
+  function showGuides(guides, markers) {
     clearGuides();
     const layer = document.getElementById('selection-layer');
+    const inv = 1 / S.zoom;
     (guides || []).slice(-2).forEach(function (g) {
       const e = PP.el('div', { style: 'position:absolute;background:#e0457b;pointer-events:none;z-index:80' });
-      if (g.axis === 'x') { e.style.left = g.pos + 'px'; e.style.top = 0; e.style.width = (1 / S.zoom) + 'px'; e.style.height = PP.SLIDE_H + 'px'; }
-      else { e.style.top = g.pos + 'px'; e.style.left = 0; e.style.height = (1 / S.zoom) + 'px'; e.style.width = PP.SLIDE_W + 'px'; }
+      if (g.axis === 'x') { e.style.left = g.pos + 'px'; e.style.top = 0; e.style.width = inv + 'px'; e.style.height = PP.SLIDE_H + 'px'; }
+      else { e.style.top = g.pos + 'px'; e.style.left = 0; e.style.height = inv + 'px'; e.style.width = PP.SLIDE_W + 'px'; }
       layer.appendChild(e); guideEls.push(e);
     });
+    (markers || []).forEach(function (m) {
+      const line = PP.el('div', { style: 'position:absolute;background:#e0457b;pointer-events:none;z-index:81' });
+      if (m.axis === 'h') {
+        const x = Math.min(m.a, m.b);
+        line.style.left = x + 'px'; line.style.top = m.y + 'px'; line.style.width = Math.abs(m.b - m.a) + 'px'; line.style.height = inv + 'px';
+        addTick(layer, m.a, m.y, true, inv); addTick(layer, m.b, m.y, true, inv);
+      } else {
+        const y = Math.min(m.a, m.b);
+        line.style.top = y + 'px'; line.style.left = m.x + 'px'; line.style.height = Math.abs(m.b - m.a) + 'px'; line.style.width = inv + 'px';
+        addTick(layer, m.x, m.a, false, inv); addTick(layer, m.x, m.b, false, inv);
+      }
+      layer.appendChild(line); guideEls.push(line);
+    });
+  }
+  function addTick(layer, x, y, horizontal, inv) {
+    const t = PP.el('div', { style: 'position:absolute;background:#e0457b;pointer-events:none;z-index:81' });
+    const len = 7 * inv;
+    if (horizontal) { t.style.left = x + 'px'; t.style.top = (y - len / 2) + 'px'; t.style.width = inv + 'px'; t.style.height = len + 'px'; }
+    else { t.style.top = y + 'px'; t.style.left = (x - len / 2) + 'px'; t.style.height = inv + 'px'; t.style.width = len + 'px'; }
+    layer.appendChild(t); guideEls.push(t);
   }
   function clearGuides() { guideEls.forEach(function (e) { e.remove(); }); guideEls = []; }
 

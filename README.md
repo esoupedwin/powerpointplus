@@ -23,6 +23,8 @@ PowerPoint keyboard shortcuts. **No install, no build step.**
   **Ctrl** = resize from center; **Ctrl+drag = duplicate**; **Shift+click** to multi-select;
   marquee select; **smart alignment guides** with snapping.
 - **Drag-and-drop image files** from the desktop straight onto a slide.
+- **Smart guides**: alignment lines **plus equal-spacing markers** that snap an object to be evenly
+  spaced between its neighbours (with PowerPoint-style distance ticks).
 - **Hyperlinks** (`Ctrl+K`) on any object — link to a web URL or another slide; clickable in the show.
 - **Mini formatting toolbar** floats above selected text (bold/italic/underline, size, color, highlight, bullets).
 - **Rich, per-character text editing** — select any run and change font, size,
@@ -30,7 +32,8 @@ PowerPoint keyboard shortcuts. **No install, no build step.**
   vertical align, **multi-level bullets/numbering** with **Tab/Shift+Tab** to demote/promote.
   Toolbar reflects the formatting at the caret. **Type-to-edit**: select a shape and just start typing.
 - **Format Painter** (copy one object's look onto another; **double-click to lock** for repeated use).
-- Shape **fill** & **outline** colors (theme + standard palettes + custom picker).
+- Shape **fill** & **outline** colors (theme + standard palettes + custom picker), **gradient fills**
+  (linear/radial presets) for shapes and slide backgrounds, and an **eyedropper** to pick any on-screen color.
 - **Group / ungroup** (`Ctrl+G` / `Ctrl+Shift+G`), **Z-order** (front/back/forward/backward),
   **align & distribute**, rotate/flip.
 - **Undo/redo** (full history), **copy/cut/paste/duplicate**, paste images from OS clipboard.

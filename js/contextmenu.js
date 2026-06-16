@@ -32,15 +32,60 @@
     };
     addGrid('Theme Colors', PP.THEME_COLORS);
     addGrid('Standard Colors', PP.STANDARD_COLORS);
+
+    // gradients (for fill / background)
+    if (cmd === 'fillColor' || cmd === 'bgColor') {
+      pop.appendChild(PP.el('div', { class: 'row-label', text: 'Gradient' }));
+      const ggrid = PP.el('div', { class: 'swatch-grid', style: 'grid-template-columns:repeat(6,22px)' });
+      gradientPresets(baseColor(cmd)).forEach(function (g) {
+        const sw = PP.el('div', { class: 'swatch', title: 'Gradient', style: 'width:22px;height:22px;background:' + PP.gradientCSS(g),
+          onclick: function () { onPick(g); PP.hideMenus(); } });
+        ggrid.appendChild(sw);
+      });
+      pop.appendChild(ggrid);
+    }
+
     const more = PP.el('div', { class: 'more' });
     more.appendChild(PP.el('button', { class: 'rbtn small', html: 'No Fill', onclick: function () { onPick('none'); PP.hideMenus(); } }));
     const inp = PP.el('input', { type: 'color', value: '#4472C4', oninput: function () { onPick(this.value); }, title: 'More Colors' });
     more.appendChild(inp);
-    more.appendChild(PP.el('span', { text: 'More…', style: 'font-size:11px;color:#605e5c' }));
+    more.appendChild(PP.el('button', { class: 'rbtn small', html: '&#128167; Eyedropper', title: 'Pick a color from the screen', onclick: function () { eyedropper(onPick); } }));
     pop.appendChild(more);
     track(pop);
     positionPop(pop, anchor);
   };
+
+  function baseColor(cmd) {
+    let c;
+    if (cmd === 'bgColor') c = PP.slide().background;
+    else { const o = PP.selectedObjs()[0]; c = o && o.fill; }
+    return (typeof c === 'string' && c[0] === '#') ? c : '#4472C4';
+  }
+  function shade(hex, pct) {
+    if (typeof hex !== 'string' || hex[0] !== '#') return hex;
+    const n = parseInt(hex.slice(1), 16);
+    let r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
+    const f = pct < 0 ? 0 : 255, t = Math.abs(pct);
+    r = Math.round((f - r) * t + r); g = Math.round((f - g) * t + g); b = Math.round((f - b) * t + b);
+    return '#' + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+  }
+  function gradientPresets(base) {
+    return [
+      { type: 'linear', angle: 90, stops: [{ c: base, p: 0 }, { c: '#FFFFFF', p: 1 }] },
+      { type: 'linear', angle: 45, stops: [{ c: shade(base, 0.3), p: 0 }, { c: shade(base, -0.3), p: 1 }] },
+      { type: 'linear', angle: 0, stops: [{ c: base, p: 0 }, { c: shade(base, -0.45), p: 1 }] },
+      { type: 'radial', stops: [{ c: shade(base, 0.4), p: 0 }, { c: base, p: 1 }] },
+      { type: 'linear', angle: 135, stops: [{ c: '#ED7D31', p: 0 }, { c: '#C00000', p: 1 }] },
+      { type: 'linear', angle: 90, stops: [{ c: '#70AD47', p: 0 }, { c: '#1F3864', p: 1 }] },
+    ];
+  }
+  function eyedropper(onPick) {
+    PP.hideMenus();
+    if (window.EyeDropper) {
+      try { new window.EyeDropper().open().then(function (r) { onPick(r.sRGBHex); }).catch(function () {}); }
+      catch (e) { PP.status('Eyedropper unavailable'); }
+    } else PP.status('Eyedropper needs a Chromium-based browser');
+  }
 
   function positionPop(pop, anchor) {
     const r = anchor.getBoundingClientRect();
