@@ -87,6 +87,12 @@ PowerPoint keyboard shortcuts. **No install, no build step.**
 - **Picture Styles** gallery (frame, rounded, drop shadow, soft edge…), **Picture Border**,
   **Picture Effects**, plus the **Arrange** and **Size** groups.
 
+**Selection Pane & Header/Footer**
+- **Selection Pane** (Arrange ▸ Selection Pane / right-click ▸ Arrange) — lists every object on the slide;
+  click to select, **eye toggle** to show/hide, **reorder** (bring forward/back), **double-click to rename**.
+- **Header & Footer** (Insert ▸ Header & Footer) — slide **number**, **date**, and **footer** text, with
+  "don't show on title slide"; rendered on slides, thumbnails and in the show.
+
 **Slides**
 - New / duplicate / delete / **drag-reorder** in the thumbnail panel, **right-click slide menu**,
   **layouts** (Title, Title+Content, Section, Two Content, Title Only, Blank, Caption), **Slide Sorter** view.
@@ -150,6 +156,7 @@ js/tables.js          table rendering, cell editing & row/col/style operations
 js/charts.js          chart objects: SVG rendering (5 types) + data-edit dialog
 js/smartart.js        SmartArt diagrams (5 layouts) + outline text-pane editor
 js/find.js            Find & Replace + View overlays (gridlines/guides)
+js/panels.js          Selection Pane (list/show-hide/reorder/rename objects)
 js/selection.js       pointer interaction: select/move/resize/rotate/marquee/reorder
 js/text.js            in-place contenteditable text editing
 js/clipboard.js       copy/cut/paste/duplicate (+ OS image paste)

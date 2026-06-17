@@ -127,7 +127,7 @@
   PP.topObjectAt = function (sx, sy) {
     const objs = PP.slide().objects;
     for (let i = objs.length - 1; i >= 0; i--) {
-      if (!objs[i].locked && PP.hitTest(objs[i], sx, sy)) return objs[i];
+      if (!objs[i].locked && !objs[i].hidden && PP.hitTest(objs[i], sx, sy)) return objs[i];
     }
     return null;
   };

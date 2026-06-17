@@ -135,7 +135,8 @@
       '-',
       { icon: '&#8635;', label: 'Rotate 90° Right', run: function () { rotateSel(90); } },
       { icon: '&#8634;', label: 'Rotate 90° Left', run: function () { rotateSel(-90); } },
-      { icon: '&#8596;', label: 'Flip Horizontal', run: function () { PP.alignObjects('group'); } },
+      '-',
+      { icon: '&#9776;', label: 'Selection Pane…', run: function () { PP.toggleSelectionPane(); } },
     ]);
   };
   function rotateSel(d) { PP.selectedObjs().forEach(function (o) { o.rotation = (o.rotation + d) % 360; }); PP.commit('Rotate'); }
@@ -396,6 +397,43 @@
     overlay.addEventListener('mousedown', function (e) { if (e.target === overlay) overlay.remove(); });
     document.body.appendChild(overlay);
     setTimeout(function () { url.focus(); }, 0);
+  };
+
+  /* ---------- Header & Footer dialog ---------- */
+  PP.openHeaderFooter = function () {
+    const hf = S.doc.hf || (S.doc.hf = { date: false, dateText: '', number: false, footer: false, footerText: '', dontShowTitle: true });
+    const overlay = PP.el('div', { class: 'modal-overlay' });
+    const dlg = PP.el('div', { class: 'modal', style: 'min-width:420px' });
+    dlg.appendChild(PP.el('div', { class: 'modal-title', text: 'Header and Footer' }));
+    const body = PP.el('div', { class: 'modal-body', style: 'display:flex;flex-direction:column;gap:12px' });
+    const row = function (label, checked, extra) {
+      const wrap = PP.el('div', { style: 'display:flex;flex-direction:column;gap:4px' });
+      const lbl = PP.el('label', { style: 'display:flex;gap:8px;align-items:center;font-size:13px' });
+      const cb = PP.el('input', { type: 'checkbox' }); if (checked) cb.checked = true;
+      lbl.appendChild(cb); lbl.appendChild(document.createTextNode(label));
+      wrap.appendChild(lbl); if (extra) wrap.appendChild(extra);
+      wrap._cb = cb; return wrap;
+    };
+    const dateText = PP.el('input', { type: 'text', placeholder: 'Fixed date (blank = today)', value: hf.dateText || '', style: 'margin-left:24px;width:60%' });
+    const dateRow = row('Date and time', hf.date, dateText);
+    const numRow = row('Slide number', hf.number);
+    const footText = PP.el('input', { type: 'text', placeholder: 'Footer text', value: hf.footerText || '', style: 'margin-left:24px;width:70%' });
+    const footRow = row('Footer', hf.footer, footText);
+    const titleRow = row("Don't show on title slide", hf.dontShowTitle);
+    [dateRow, numRow, footRow, titleRow].forEach(function (r) { body.appendChild(r); });
+    dlg.appendChild(body);
+    const btns = PP.el('div', { class: 'modal-btns' });
+    btns.appendChild(PP.el('button', { class: 'btn-secondary', text: 'Cancel', onclick: function () { overlay.remove(); } }));
+    btns.appendChild(PP.el('button', { class: 'btn-primary', text: 'Apply to All', onclick: function () {
+      hf.date = dateRow._cb.checked; hf.dateText = dateText.value.trim();
+      hf.number = numRow._cb.checked; hf.footer = footRow._cb.checked; hf.footerText = footText.value.trim();
+      hf.dontShowTitle = titleRow._cb.checked;
+      PP.commit('Header & Footer'); overlay.remove();
+    } }));
+    dlg.appendChild(btns);
+    overlay.appendChild(dlg);
+    overlay.addEventListener('mousedown', function (e) { if (e.target === overlay) overlay.remove(); });
+    document.body.appendChild(overlay);
   };
 
   /* ---------- backstage (File menu) ---------- */

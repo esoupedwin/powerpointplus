@@ -143,6 +143,7 @@
     const slide = S.doc.slides[index];
     const node = PP.el('div', { class: 'show-slide', style: 'position:absolute;top:0;left:0;width:' + PP.SLIDE_W + 'px;height:' + PP.SLIDE_H + 'px;transform-origin:top left;background:' + (PP.bgCSS ? PP.bgCSS(slide.background) : (slide.background || '#fff')) });
     slide.objects.forEach(function (o) {
+      if (o.hidden) return;
       const n = PP.objNode(o);
       n.style.pointerEvents = 'none';
       if (animate && o.animation) { n.classList.add('anim-' + o.animation); n.style.animationDelay = (0.15 * slide.objects.indexOf(o)) + 's'; }
@@ -156,6 +157,7 @@
       }
       node.appendChild(n);
     });
+    (PP.footerNodes ? PP.footerNodes(index) : []).forEach(function (n) { node.appendChild(n); });
     return node;
   }
   function fitSlide(wrap, node, boxW, boxH) {

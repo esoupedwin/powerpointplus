@@ -257,7 +257,25 @@
   PP.renderObjects = function () {
     const root = elObjects();
     root.innerHTML = '';
-    PP.slide().objects.forEach(function (o) { root.appendChild(PP.objNode(o)); });
+    PP.slide().objects.forEach(function (o) { if (!o.hidden) root.appendChild(PP.objNode(o)); });
+    PP.footerNodes(S.current).forEach(function (n) { root.appendChild(n); });
+  };
+
+  // Header/Footer placeholders (date • footer • slide number) along the bottom
+  PP.footerNodes = function (idx) {
+    const hf = S.doc.hf; if (!hf) return [];
+    const slide = S.doc.slides[idx]; if (!slide) return [];
+    if (hf.dontShowTitle && slide.layout === 'title') return [];
+    const out = [], pad = 40, third = (PP.SLIDE_W - 2 * pad) / 3;
+    const mk = function (x, align, text) {
+      return PP.el('div', { class: 'slide-footer', text: text,
+        style: 'position:absolute;bottom:16px;left:' + x + 'px;width:' + third + 'px;text-align:' + align +
+          ';font-size:14px;color:#595959;pointer-events:none;overflow:hidden;white-space:nowrap' });
+    };
+    if (hf.date) out.push(mk(pad, 'left', hf.dateText || new Date().toLocaleDateString()));
+    if (hf.footer && hf.footerText) out.push(mk(pad + third, 'center', hf.footerText));
+    if (hf.number) out.push(mk(pad + 2 * third, 'right', String(idx + 1)));
+    return out;
   };
 
   /* ---------- background ---------- */
@@ -276,7 +294,7 @@
     if (S.view !== 'normal') return;
     if (S.cropId && PP.renderCropUI) { PP.renderCropUI(); return; }
     if (S.editPtsId && PP.renderEditPointsUI) { PP.renderEditPointsUI(); return; }
-    const objs = PP.selectedObjs();
+    const objs = PP.selectedObjs().filter(function (o) { return !o.hidden; });
     const inv = 1 / S.zoom;            // counter-scale handles to stay screen-constant
 
     // multi-select: a single group bounding box with resize handles
@@ -408,10 +426,12 @@
       render.style.background = bgCSS(slide.background);
       // scale to thumb width (~170px) — set after attach
       slide.objects.forEach(function (o) {
+        if (o.hidden) return;
         const n = PP.objNode(o);
         n.style.cursor = 'default'; n.style.pointerEvents = 'none';
         render.appendChild(n);
       });
+      PP.footerNodes(i).forEach(function (n) { render.appendChild(n); });
       th.appendChild(render);
       row.appendChild(th);
       root.appendChild(row);

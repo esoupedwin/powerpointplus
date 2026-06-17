@@ -74,6 +74,8 @@
       case 'smartLayout': PP.smartartSetLayout(arg); break;
       case 'smartColor': PP.smartartSetColor(arg); break;
       case 'textPane': PP.openTextPane(); break;
+      case 'selectionPane': PP.toggleSelectionPane(); break;
+      case 'headerFooter': PP.openHeaderFooter(); break;
       case 'chartType': PP.chartSetType(arg); break;
       case 'chartData': PP.openChartData(); break;
       case 'chartToggle': PP.chartToggle(arg); break;
