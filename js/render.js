@@ -259,6 +259,18 @@
     root.innerHTML = '';
     PP.slide().objects.forEach(function (o) { if (!o.hidden) root.appendChild(PP.objNode(o)); });
     PP.footerNodes(S.current).forEach(function (n) { root.appendChild(n); });
+    if (S.animBadges && PP.slideAnims) {
+      const inv = 1 / S.zoom;
+      PP.slideAnims(PP.slide()).forEach(function (a) {
+        const o = PP.findObj(a.objId); if (!o || o.hidden) return;
+        const num = PP.animNumberFor(PP.slide(), a.objId);
+        const badge = PP.el('div', { class: 'anim-badge', text: String(num) });
+        badge.style.cssText = 'position:absolute;left:' + (o.x) + 'px;top:' + (o.y) + 'px;' +
+          'transform:translate(-100%,-30%);width:' + (18 * inv) + 'px;height:' + (16 * inv) + 'px;' +
+          'font-size:' + (11 * inv) + 'px;line-height:' + (16 * inv) + 'px';
+        root.appendChild(badge);
+      });
+    }
   };
 
   // Header/Footer placeholders (date • footer • slide number) along the bottom

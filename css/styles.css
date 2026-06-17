@@ -138,6 +138,20 @@ body{
 }
 .rotate-stem{position:absolute;width:1px;background:var(--sel);pointer-events:none}
 
+/* Animation order badge (shown on the Animations tab) */
+.anim-badge{position:absolute;background:#ffd34d;border:1px solid #c99a00;color:#5a4500;border-radius:3px;text-align:center;font-weight:700;pointer-events:none;z-index:40;box-shadow:0 1px 2px rgba(0,0,0,.25)}
+
+/* Animation Pane rows */
+.anim-pane .ap-row{display:flex;align-items:center;gap:6px;padding:5px 8px;border-radius:4px;cursor:pointer;font-size:12px}
+.anim-pane .ap-row:hover{background:var(--hover)}
+.anim-pane .ap-row.sel{background:#cfe4ff}
+.ap-num{background:#ffd34d;border:1px solid #c99a00;color:#5a4500;min-width:18px;height:18px;border-radius:3px;text-align:center;line-height:18px;font-weight:700;font-size:11px}
+.ap-trig{width:16px;text-align:center;color:var(--muted)}
+.ap-name{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ap-btn{border:0;background:transparent;cursor:pointer;color:var(--muted);width:18px;font-size:11px}
+.ap-btn:hover{color:var(--text)}
+.ap-empty{padding:14px;font-size:12px;color:var(--muted);line-height:1.4}
+
 /* Selection Pane */
 .sel-pane{position:fixed;z-index:5500;width:230px;max-height:60vh;background:#fff;border:1px solid var(--line-strong);box-shadow:0 6px 22px rgba(0,0,0,.22);border-radius:6px;display:flex;flex-direction:column;overflow:hidden}
 .sp-title{display:flex;align-items:center;justify-content:space-between;font-size:13px;font-weight:600;padding:8px 12px;border-bottom:1px solid var(--line)}

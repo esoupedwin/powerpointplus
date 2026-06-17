@@ -100,10 +100,14 @@ PowerPoint keyboard shortcuts. **No install, no build step.**
 **Design / Transitions / Animations**
 - 8 **themes**, **format background** color.
 - 10 slide **transitions** (Fade, Push, Wipe, Split, Zoom, Morph, Fall Over…) with duration & Apply-to-All.
-- 8 entrance **animations** (Appear, Fly In, Float, Wipe, Zoom, Bounce, Spin).
+- entrance **animations** (Appear, Fly In, Float, Wipe, Zoom, Bounce, Spin) with a full
+  **Animation Pane**: per-object **Start** (On Click / With Previous / After Previous), **Duration**,
+  **Delay**, **reorder** (Move Earlier/Later), remove, and **Preview**. Numbered **order badges**
+  appear on the slide while the Animations tab is active.
 
 **Slide Show**
-- Full-screen presentation (F5 / Shift+F5), click/keys to advance, transitions + animations play,
+- Full-screen presentation (F5 / Shift+F5); **click/Space advances animations step-by-step**
+  (entrance objects stay hidden until their turn), then advances the slide; transitions play;
   on-screen controls, Esc to end.
 - **Presenter View** (`Alt+F5` or Slide Show ▸ Presenter View): current slide, **next-slide preview**,
   **speaker notes**, an **elapsed timer** + clock, and slide-number nav — just like PowerPoint.
@@ -156,7 +160,7 @@ js/tables.js          table rendering, cell editing & row/col/style operations
 js/charts.js          chart objects: SVG rendering (5 types) + data-edit dialog
 js/smartart.js        SmartArt diagrams (5 layouts) + outline text-pane editor
 js/find.js            Find & Replace + View overlays (gridlines/guides)
-js/panels.js          Selection Pane (list/show-hide/reorder/rename objects)
+js/panels.js          Selection Pane + Animation Pane (sequence/timing/reorder)
 js/selection.js       pointer interaction: select/move/resize/rotate/marquee/reorder
 js/text.js            in-place contenteditable text editing
 js/clipboard.js       copy/cut/paste/duplicate (+ OS image paste)

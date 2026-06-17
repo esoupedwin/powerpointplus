@@ -77,12 +77,66 @@
     { id: 'spin', name: 'Spin', icon: '&#8635;' },
   ];
 
+  // ---- animation sequence model (slide.anims) ----
+  PP.slideAnims = function (slide) {
+    slide = slide || PP.slide();
+    if (!slide.anims) {
+      slide.anims = [];
+      slide.objects.forEach(function (o) {        // migrate legacy o.animation
+        if (o.animation) slide.anims.push({ objId: o.id, effect: o.animation, trigger: 'afterPrev', duration: 600, delay: 0 });
+        o.animation = null;
+      });
+    }
+    slide.anims = slide.anims.filter(function (a) { return slide.objects.some(function (o) { return o.id === a.objId; }); });
+    return slide.anims;
+  };
+  PP.objAnim = function (slide, id) { return PP.slideAnims(slide).find(function (a) { return a.objId === id; }); };
+
   PP.setAnimation = function (id) {
     const objs = PP.selectedObjs();
     if (!objs.length) { PP.status('Select an object to animate'); return; }
-    objs.forEach(function (o) { o.animation = id === 'none' ? null : id; });
+    const anims = PP.slideAnims();
+    objs.forEach(function (o) {
+      const existing = anims.find(function (a) { return a.objId === o.id; });
+      if (id === 'none') { const i = anims.indexOf(existing); if (i >= 0) anims.splice(i, 1); }
+      else if (existing) existing.effect = id;
+      else anims.push({ objId: o.id, effect: id, trigger: 'click', duration: 600, delay: 0 });
+    });
     PP.commit('Animation');
     PP.status('Animation: ' + id);
+    if (PP.renderAnimPane) PP.renderAnimPane();
+  };
+  PP.setAnimProp = function (key, val) {
+    const o = PP.selectedObjs()[0]; if (!o) return;
+    const a = PP.objAnim(PP.slide(), o.id); if (!a) return;
+    a[key] = val; PP.commit('Animation Timing'); if (PP.renderAnimPane) PP.renderAnimPane();
+  };
+  PP.moveAnim = function (objId, dir) {
+    const anims = PP.slideAnims();
+    const i = anims.findIndex(function (a) { return a.objId === objId; });
+    const j = i + dir;
+    if (i < 0 || j < 0 || j >= anims.length) return;
+    const t = anims[i]; anims[i] = anims[j]; anims[j] = t;
+    PP.commit('Reorder Animation'); if (PP.renderAnimPane) PP.renderAnimPane();
+  };
+  PP.removeAnim = function (objId) {
+    const anims = PP.slideAnims();
+    const i = anims.findIndex(function (a) { return a.objId === objId; });
+    if (i >= 0) { anims.splice(i, 1); PP.commit('Remove Animation'); if (PP.renderAnimPane) PP.renderAnimPane(); }
+  };
+  // click-group numbers: a 'click' anim starts a new group; with/after-previous join the current group
+  PP.animGroups = function (slide) {
+    const anims = PP.slideAnims(slide), groups = []; let cur = null;
+    anims.forEach(function (a) {
+      if (a.trigger === 'click' || !cur) { cur = { num: groups.length + 1, anims: [a] }; groups.push(cur); }
+      else cur.anims.push(a);
+    });
+    return groups;
+  };
+  PP.animNumberFor = function (slide, objId) {
+    const groups = PP.animGroups(slide);
+    for (let g = 0; g < groups.length; g++) for (let k = 0; k < groups[g].anims.length; k++) if (groups[g].anims[k].objId === objId) return groups[g].num;
+    return null;
   };
 
   /* ---------- presentation overlay ---------- */
@@ -146,7 +200,6 @@
       if (o.hidden) return;
       const n = PP.objNode(o);
       n.style.pointerEvents = 'none';
-      if (animate && o.animation) { n.classList.add('anim-' + o.animation); n.style.animationDelay = (0.15 * slide.objects.indexOf(o)) + 's'; }
       if (o.hyperlink) {
         n.style.pointerEvents = 'auto'; n.style.cursor = 'pointer';
         n.addEventListener('click', function (ev) {
@@ -186,10 +239,11 @@
   function onShowRight(e) { e.preventDefault(); prev(); }
 
   function next() {
+    if (hasMoreAnims()) { playGroup(show.groups[show.animStep]); show.animStep++; return; }
     if (show.index < S.doc.slides.length - 1) { show.index++; renderShow(true); }
     else endShow();
   }
-  function prev() { if (show.index > 0) { show.index--; renderShow(true); } }
+  function prev() { if (show.index > 0) { show.index--; renderShow(true, true); } }
 
   function onShowKey(e) {
     if (!show) return;
@@ -214,7 +268,7 @@
     slide.style.transform = 'scale(' + scale + ')';
   }
 
-  function renderShow(animate) {
+  function renderShow(animate, revealAll) {
     if (show.presenter) { renderPresenter(); return; }
     const slide = S.doc.slides[show.index];
     const stage = document.getElementById('show-stage');
@@ -226,7 +280,77 @@
     if (animate && trans !== 'none' && trans !== 'cut') {
       node.style.animation = 'show-' + trans + ' ' + (slide.transition.duration || 700) + 'ms ease';
     }
+    setupAnims(node, slide, revealAll);
   }
+
+  // ---- on-enter animation setup + click-stepped playback ----
+  function setupAnims(node, slide, revealAll) {
+    const anims = PP.slideAnims(slide);
+    show.animNodes = {};
+    node.querySelectorAll('.obj').forEach(function (n) { show.animNodes[n.dataset.id] = n; });
+    show.groups = PP.animGroups(slide);
+    if (revealAll || !anims.length) { show.animStep = show.groups.length; return; }
+    show.animStep = 0;
+    anims.forEach(function (a) { const n = show.animNodes[a.objId]; if (n) n.style.visibility = 'hidden'; });
+    // auto-play a leading group that doesn't start on click
+    if (show.groups.length && show.groups[0].anims[0].trigger !== 'click') {
+      playGroup(show.groups[0]); show.animStep = 1;
+    }
+    updateShowHint();
+  }
+  function playGroup(g) {
+    const starts = [];
+    g.anims.forEach(function (a, i) {
+      let s;
+      if (i === 0) s = (a.delay || 0);
+      else if (a.trigger === 'withPrev') s = starts[i - 1] + (a.delay || 0);
+      else s = starts[i - 1] + (g.anims[i - 1].duration || 600) + (a.delay || 0); // afterPrev
+      starts.push(s);
+    });
+    g.anims.forEach(function (a, i) {
+      const n = show.animNodes[a.objId]; if (!n) return;
+      setTimeout(function () {
+        if (!show) return;
+        n.style.visibility = 'visible';
+        n.classList.remove('anim-' + a.effect); void n.offsetWidth;
+        n.style.animationDuration = (a.duration || 600) + 'ms';
+        n.classList.add('anim-' + a.effect);
+      }, starts[i]);
+    });
+  }
+  function hasMoreAnims() { return show && !show.presenter && show.groups && show.animStep < show.groups.length; }
+  function updateShowHint() {}
+
+  // In-editor preview: play the slide's animations on the editing canvas
+  PP.previewAnimations = function () {
+    const slide = PP.slide(), anims = PP.slideAnims(slide);
+    if (!anims.length) { PP.status('No animations on this slide'); return; }
+    const groups = PP.animGroups(slide);
+    const nodeFor = function (id) { return document.querySelector('#slide-objects .obj[data-id="' + id + '"]'); };
+    anims.forEach(function (a) { const n = nodeFor(a.objId); if (n) n.style.visibility = 'hidden'; });
+    let t = 0;
+    groups.forEach(function (g) {
+      const starts = [];
+      g.anims.forEach(function (a, i) {
+        let s;
+        if (i === 0) s = (a.delay || 0);
+        else if (a.trigger === 'withPrev') s = starts[i - 1] + (a.delay || 0);
+        else s = starts[i - 1] + (g.anims[i - 1].duration || 600) + (a.delay || 0);
+        starts.push(s);
+        const n = nodeFor(a.objId); if (!n) return;
+        setTimeout(function () {
+          n.style.visibility = 'visible'; n.classList.remove('anim-' + a.effect); void n.offsetWidth;
+          n.style.animationDuration = (a.duration || 600) + 'ms'; n.classList.add('anim-' + a.effect);
+        }, t + s);
+      });
+      const gdur = starts.length ? Math.max.apply(null, starts.map(function (s, i) { return s + (g.anims[i].duration || 600); })) : 0;
+      t += gdur + 350;
+    });
+    setTimeout(function () {
+      anims.forEach(function (a) { const n = nodeFor(a.objId); if (n) { n.style.visibility = 'visible'; n.classList.remove('anim-' + a.effect); } });
+    }, t + 250);
+    PP.status('Previewing animations…');
+  };
 
   /* ---------- presenter view ---------- */
   function renderPresenter() {

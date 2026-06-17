@@ -98,6 +98,8 @@
       case 'transition': PP.setTransition(arg); break;
       case 'transitionAll': PP.setTransition(arg, true); break;
       case 'animation': PP.setAnimation(arg); break;
+      case 'previewAnim': PP.previewAnimations(); break;
+      case 'animationPane': PP.toggleAnimationPane(); break;
       case 'view': PP.setView(arg); break;
       case 'fit': PP.fitToWindow(); break;
       case 'lineSpacing': setProp('lineHeight', parseFloat(arg)); break;
@@ -540,13 +542,48 @@
   }
 
   function buildAnimations() {
+    const o = PP.selectedObjs()[0];
+    const a = o ? PP.objAnim(PP.slide(), o.id) : null;
+
+    const preview = group('Preview', bigBtn('&#9654;', 'Preview', 'previewAnim'));
+
     const strip = PP.el('div', { class: 'fx-strip' });
-    PP.ANIMATIONS.forEach(function (a) {
-      const chip = PP.el('div', { class: 'fx-chip', dataset: { aid: a.id }, onclick: function () { PP.cmd('animation', a.id); } },
-        [PP.el('div', { class: 'ico', html: a.icon }), PP.el('span', { text: a.name })]);
+    PP.ANIMATIONS.forEach(function (an) {
+      const chip = PP.el('div', { class: 'fx-chip' + (a && a.effect === an.id ? ' active' : '') + (an.id === 'none' && !a ? ' active' : ''), dataset: { aid: an.id }, onclick: function () { PP.cmd('animation', an.id); } },
+        [PP.el('div', { class: 'ico', html: an.icon }), PP.el('span', { text: an.name })]);
       strip.appendChild(chip);
     });
-    return [group('Animation (select an object first)', strip)];
+    const animation = group('Animation', strip);
+
+    const startSel = PP.el('select', { class: 'r-select', style: 'width:120px', disabled: a ? null : 'disabled',
+      onchange: function () { PP.setAnimProp('trigger', this.value); } });
+    [['click', 'On Click'], ['withPrev', 'With Previous'], ['afterPrev', 'After Previous']].forEach(function (t) {
+      startSel.appendChild(PP.el('option', { value: t[0], text: t[1] }));
+    });
+    if (a) startSel.value = a.trigger;
+    const durIn = PP.el('input', { class: 'r-input', type: 'number', step: '0.25', style: 'width:56px', value: a ? (a.duration / 1000) : '0.6', disabled: a ? null : 'disabled',
+      onchange: function () { PP.setAnimProp('duration', Math.max(0, parseFloat(this.value) || 0) * 1000); } });
+    const delayIn = PP.el('input', { class: 'r-input', type: 'number', step: '0.25', style: 'width:56px', value: a ? (a.delay / 1000) : '0', disabled: a ? null : 'disabled',
+      onchange: function () { PP.setAnimProp('delay', Math.max(0, parseFloat(this.value) || 0) * 1000); } });
+    const timing = group('Timing', PP.el('div', { style: 'display:flex;flex-direction:column;gap:3px' }, [
+      PP.el('div', { class: 'r-field' }, [PP.el('span', { text: 'Start', style: 'font-size:11px;width:40px' }), startSel]),
+      PP.el('div', { class: 'r-field' }, [PP.el('span', { text: 'Duration', style: 'font-size:11px;width:52px' }), durIn]),
+      PP.el('div', { class: 'r-field' }, [PP.el('span', { text: 'Delay', style: 'font-size:11px;width:52px' }), delayIn]),
+    ]));
+
+    const reorder = PP.el('div', { class: 'rstack' }, [
+      smallRowFn('&#9650;', 'Move Earlier', function () { if (o) PP.moveAnim(o.id, -1); }),
+      smallRowFn('&#9660;', 'Move Later', function () { if (o) PP.moveAnim(o.id, 1); }),
+    ]);
+    const advanced = group('Advanced Animation', [
+      menuRowBtn('&#9776;', 'Animation Pane', function () { PP.toggleAnimationPane(); }),
+      reorder
+    ]);
+
+    return [preview, animation, timing, advanced];
+  }
+  function smallRowFn(icon, label, fn) {
+    return PP.el('button', { class: 'rbtn small', onclick: fn }, [PP.el('span', { class: 'ico', html: icon }), PP.el('span', { text: label })]);
   }
 
   function buildSlideShow() {
@@ -914,25 +951,37 @@
       activeTab = tab;
       PP.$$('.rtab').forEach(function (b) { b.classList.toggle('active', b === t); });
       PP.renderRibbon();
+      syncAnimBadges();
     });
     ensureCtxTab();
     PP.renderRibbon();
 
-    PP.on('selection', function () { PP.syncRibbonState(); PP.updateContextualTab(); });
+    PP.on('selection', function () {
+      PP.syncRibbonState(); PP.updateContextualTab();
+      if (activeTab === 'animations') PP.renderRibbon();   // refresh timing controls for the selection
+    });
     PP.on('change', function () {
       if (activeTab === 'transitions' || activeTab === 'animations') return; // avoid rebuild flicker
       PP.syncRibbonState();
       PP.updateContextualTab();
     });
     PP.on('slidechange', function () {
-      if (activeTab === 'transitions') PP.renderRibbon();
+      if (activeTab === 'transitions' || activeTab === 'animations') PP.renderRibbon();
+      syncAnimBadges();
     });
+  }
+  function syncAnimBadges() {
+    const on = activeTab === 'animations';
+    if (!!S.animBadges === on) return;
+    S.animBadges = on;
+    if (!S.editingId && !S.tableEditId && S.view === 'normal') { PP.renderObjects(); PP.renderSelection(); }
   }
 
   PP.gotoTab = function (tab) {
     activeTab = tab;
     PP.$$('.rtab').forEach(function (b) { b.classList.toggle('active', b.dataset.tab === tab); });
     PP.renderRibbon();
+    syncAnimBadges();
   };
 
   PP.initRibbon = init;

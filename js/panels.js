@@ -89,4 +89,51 @@
   PP.on('selection', function () { if (pane) renderPane(); });
   PP.on('slidechange', function () { if (pane) renderPane(); });
 
+  /* ============ Animation Pane ============ */
+  const EFFECT_NAMES = { fadeIn: 'Appear', fly: 'Fly In', float: 'Float In', wipe: 'Wipe', zoomIn: 'Zoom', bounce: 'Bounce', spin: 'Spin' };
+  const TRIGGER_ICON = { click: '&#128432;', withPrev: '&#9201;', afterPrev: '&#8987;' };
+  let apane = null;
+  PP.isAnimationPaneOpen = function () { return !!apane; };
+  PP.toggleAnimationPane = function () {
+    if (apane) { closeAP(); return; }
+    apane = PP.el('div', { class: 'sel-pane anim-pane' });
+    apane.innerHTML =
+      '<div class="sp-title">Animation Pane <button class="sp-close">&times;</button></div>' +
+      '<div class="sp-tools"><button data-ap="play">&#9654; Play From</button></div>' +
+      '<div class="sp-list ap-list"></div>';
+    document.body.appendChild(apane);
+    apane.querySelector('.sp-close').addEventListener('click', closeAP);
+    apane.querySelector('.sp-tools').addEventListener('click', function (e) {
+      if (e.target.closest('button')) PP.previewAnimations();
+    });
+    const ed = document.getElementById('editor').getBoundingClientRect();
+    apane.style.top = (ed.top + 12) + 'px'; apane.style.right = '14px';
+    renderAP();
+  };
+  function closeAP() { if (apane) { apane.remove(); apane = null; } }
+  PP.closeAnimationPane = closeAP;
+  PP.renderAnimPane = function () { if (apane) renderAP(); };
+
+  function renderAP() {
+    const list = apane.querySelector('.ap-list'); list.innerHTML = '';
+    const slide = PP.slide(), anims = PP.slideAnims(slide);
+    if (!anims.length) { list.appendChild(PP.el('div', { class: 'ap-empty', text: 'No animations. Select an object and pick an effect on the Animations tab.' })); return; }
+    anims.forEach(function (a) {
+      const o = PP.findObj(a.objId, slide); if (!o) return;
+      const num = PP.animNumberFor(slide, a.objId);
+      const row = PP.el('div', { class: 'ap-row' + (PP.isSelected(a.objId) ? ' sel' : '') });
+      row.appendChild(PP.el('span', { class: 'ap-num', text: String(num) }));
+      row.appendChild(PP.el('span', { class: 'ap-trig', html: TRIGGER_ICON[a.trigger] || '' , title: a.trigger }));
+      row.appendChild(PP.el('span', { class: 'ap-name', text: (EFFECT_NAMES[a.effect] || a.effect) + ' · ' + PP.objDisplayName(o, slide) }));
+      const up = PP.el('button', { class: 'ap-btn', html: '&#9650;', title: 'Move earlier', onclick: function (e) { e.stopPropagation(); PP.moveAnim(a.objId, -1); } });
+      const down = PP.el('button', { class: 'ap-btn', html: '&#9660;', title: 'Move later', onclick: function (e) { e.stopPropagation(); PP.moveAnim(a.objId, 1); } });
+      const rm = PP.el('button', { class: 'ap-btn', html: '&times;', title: 'Remove', onclick: function (e) { e.stopPropagation(); PP.removeAnim(a.objId); } });
+      row.appendChild(up); row.appendChild(down); row.appendChild(rm);
+      row.addEventListener('mousedown', function (e) { if (e.target.closest('.ap-btn')) return; PP.select(a.objId); PP.emit('change'); });
+      list.appendChild(row);
+    });
+  }
+  PP.on('selection', function () { if (apane) renderAP(); });
+  PP.on('slidechange', function () { if (apane) renderAP(); });
+
 })(window.PP);
