@@ -375,12 +375,14 @@
 
     const layoutBtn = PP.el('button', { class: 'rbtn small', onclick: function () { PP.openLayoutMenu(layoutBtn); } },
       [PP.el('span', { class: 'ico', html: '&#9707;' }), PP.el('span', { text: 'Layout' })]);
+    const sectionBtn = PP.el('button', { class: 'rbtn small', onclick: function () { PP.openSectionMenuAnchor(sectionBtn); } },
+      [PP.el('span', { class: 'ico', html: '&#9776;' }), PP.el('span', { text: 'Section' })]);
     const slides = group('Slides', [
       bigBtn('&#10010;', 'New\nSlide', 'newSlide'),
       PP.el('div', { class: 'rstack' }, [
         layoutBtn,
         smallRow('&#8635;', 'Reset', 'reset'),
-        smallRow('&#9776;', 'Section', 'section')
+        sectionBtn
       ])
     ]);
 
@@ -520,7 +522,16 @@
     });
     const bgBtn = bigBtn('&#127912;', 'Format\nBackground', 'bgMenu');
     bgBtn.onclick = function () { PP.openColorPopover(bgBtn, 'bgColor', function (c) { PP.cmd('bgColor', c); }); };
-    return [group('Themes', strip), group('Customize', bgBtn)];
+    const sizeBtn = bigBtn('&#9707;', 'Slide\nSize', 'slideSize');
+    sizeBtn.onclick = function () {
+      PP.openMenu(sizeBtn, [
+        { icon: PP.SLIDE_W === 960 ? '&#10003;' : '', label: 'Standard (4:3)', run: function () { PP.setSlideSize(960, 720, true); } },
+        { icon: PP.SLIDE_W === 1280 ? '&#10003;' : '', label: 'Widescreen (16:9)', run: function () { PP.setSlideSize(1280, 720, true); } },
+        '-',
+        { icon: '', label: 'Custom Slide Size…', run: function () { PP.openSlideSizeDialog(); } },
+      ]);
+    };
+    return [group('Themes', strip), group('Customize', [bgBtn, sizeBtn])];
   }
 
   function buildTransitions() {
@@ -942,6 +953,89 @@
     }
   };
 
+  /* ---------- "Tell Me" command search ---------- */
+  function commandRegistry() {
+    const cmds = [
+      ['New Slide', function () { PP.addSlide(PP.contentSlide()); }, 'add'],
+      ['Duplicate Slide', function () { PP.duplicateSlide(); }],
+      ['Delete Slide', function () { PP.deleteSlide(); }],
+      ['Add Section', function () { PP.addSection(S.current); }],
+      ['Insert Text Box', function () { PP.armInsert('text'); }],
+      ['Insert Picture', function () { PP.cmd('picture'); }, 'image photo'],
+      ['Insert Table', function () { PP.insertTable(3, 4); }],
+      ['Insert Chart', function () { PP.insertChart('column'); }, 'graph'],
+      ['Insert SmartArt', function () { PP.insertSmartArt('list'); }, 'diagram'],
+      ['Insert Rectangle', function () { PP.armInsert('shape', 'rect'); }, 'shape'],
+      ['Insert Oval', function () { PP.armInsert('shape', 'ellipse'); }, 'circle shape'],
+      ['Insert Arrow', function () { PP.armInsert('shape', 'arrowRight'); }, 'shape'],
+      ['Bold', function () { PP.cmd('bold'); }, 'format'],
+      ['Italic', function () { PP.cmd('italic'); }, 'format'],
+      ['Underline', function () { PP.cmd('underline'); }, 'format'],
+      ['Bullets', function () { PP.cmd('bullet', 'disc'); }, 'list'],
+      ['Find', function () { PP.openFindReplace(false); }, 'search'],
+      ['Replace', function () { PP.openFindReplace(true); }],
+      ['Insert Hyperlink', function () { PP.openHyperlink(); }, 'link'],
+      ['Header and Footer', function () { PP.openHeaderFooter(); }, 'slide number date'],
+      ['Selection Pane', function () { PP.toggleSelectionPane(); }],
+      ['Animation Pane', function () { PP.gotoTab('animations'); PP.toggleAnimationPane(); }],
+      ['Start Slide Show', function () { PP.startShow(0); }, 'present play'],
+      ['Presenter View', function () { PP.startPresenter(S.current); }, 'present'],
+      ['Slide Size 16:9 (Widescreen)', function () { PP.setSlideSize(1280, 720, true); }],
+      ['Slide Size 4:3 (Standard)', function () { PP.setSlideSize(960, 720, true); }],
+      ['Format Background', function () { PP.gotoTab('design'); }, 'color'],
+      ['Gridlines', function () { PP.toggleGridlines(); }, 'view'],
+      ['Guides', function () { PP.toggleGuidesView(); }, 'view'],
+      ['Fit to Window', function () { PP.fitToWindow(); }, 'zoom'],
+      ['Save', function () { PP.save(); }],
+      ['Open', function () { document.getElementById('file-open').click(); }],
+      ['Export / Save As', function () { PP.exportFile(); }, 'download'],
+      ['Undo', function () { PP.undo(); }],
+      ['Redo', function () { PP.redo(); }],
+    ];
+    PP.THEMES.forEach(function (t) { cmds.push(['Theme: ' + t.name, function () { PP.applyTheme(t.name); }, 'design']); });
+    return cmds.map(function (c) { return { label: c[0], run: c[1], kw: (c[0] + ' ' + (c[2] || '')).toLowerCase() }; });
+  }
+  let tellPop = null;
+  function buildSearch() {
+    const tabs = document.getElementById('ribbon-tabs');
+    const box = PP.el('div', { class: 'tellme' });
+    const inp = PP.el('input', { class: 'tellme-input', type: 'text', placeholder: '🔍 Tell me what you want to do' });
+    box.appendChild(inp);
+    tabs.appendChild(box);
+    const reg = commandRegistry();
+    let matches = [], sel = 0;
+    function close() { if (tellPop) { tellPop.remove(); tellPop = null; } }
+    function open() {
+      const q = inp.value.trim().toLowerCase();
+      close(); if (!q) return;
+      matches = reg.filter(function (c) { return c.kw.indexOf(q) >= 0; }).slice(0, 8);
+      if (!matches.length) return;
+      sel = 0;
+      tellPop = PP.el('div', { class: 'tellme-pop' });
+      matches.forEach(function (m, i) {
+        const it = PP.el('div', { class: 'tellme-item' + (i === sel ? ' sel' : ''), text: m.label });
+        it.addEventListener('mousedown', function (e) { e.preventDefault(); run(m); });
+        tellPop.appendChild(it);
+      });
+      const r = inp.getBoundingClientRect();
+      tellPop.style.left = r.left + 'px'; tellPop.style.top = (r.bottom + 2) + 'px'; tellPop.style.width = r.width + 'px';
+      document.body.appendChild(tellPop);
+    }
+    function run(m) { close(); inp.value = ''; inp.blur(); m.run(); }
+    inp.addEventListener('input', open);
+    inp.addEventListener('focus', open);
+    inp.addEventListener('blur', function () { setTimeout(close, 150); });
+    inp.addEventListener('keydown', function (e) {
+      e.stopPropagation();
+      if (!tellPop) return;
+      if (e.key === 'ArrowDown') { e.preventDefault(); sel = Math.min(sel + 1, matches.length - 1); hi(); }
+      else if (e.key === 'ArrowUp') { e.preventDefault(); sel = Math.max(sel - 1, 0); hi(); }
+      else if (e.key === 'Enter') { e.preventDefault(); if (matches[sel]) run(matches[sel]); }
+      else if (e.key === 'Escape') { close(); inp.blur(); }
+    });
+    function hi() { PP.$$('.tellme-item', tellPop).forEach(function (el, i) { el.classList.toggle('sel', i === sel); }); }
+  }
+
   /* ---------- tab switching ---------- */
   function init() {
     document.getElementById('ribbon-tabs').addEventListener('click', function (e) {
@@ -954,6 +1048,7 @@
       syncAnimBadges();
     });
     ensureCtxTab();
+    buildSearch();
     PP.renderRibbon();
 
     PP.on('selection', function () {

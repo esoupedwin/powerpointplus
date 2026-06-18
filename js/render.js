@@ -428,7 +428,15 @@
   PP.renderThumbs = function () {
     const root = document.getElementById('thumbs');
     root.innerHTML = '';
+    const sections = PP.computeSections();
+    const headerAt = {}; const collapsedSet = {};
+    if (sections) sections.forEach(function (sec) {
+      headerAt[sec.start] = sec;
+      if (sec.collapsed) for (let k = sec.start; k < sec.start + sec.count; k++) collapsedSet[k] = true;
+    });
     S.doc.slides.forEach(function (slide, i) {
+      if (headerAt[i]) root.appendChild(sectionHeader(headerAt[i]));
+      if (collapsedSet[i]) return;
       const row = PP.el('div', { class: 'thumb-row', dataset: { idx: i } });
       row.appendChild(PP.el('div', { class: 'thumb-num', text: String(i + 1) }));
       const th = PP.el('div', { class: 'thumb' + (i === S.current ? ' active' : ''), dataset: { idx: i } });
@@ -454,6 +462,26 @@
       });
     });
   };
+
+  function sectionHeader(sec) {
+    const h = PP.el('div', { class: 'section-header', dataset: { start: sec.start } });
+    const tri = PP.el('span', { class: 'sec-tri', html: sec.collapsed ? '&#9654;' : '&#9660;' });
+    tri.addEventListener('click', function (e) { e.stopPropagation(); PP.toggleSectionCollapsed(sec); });
+    const name = PP.el('span', { class: 'sec-name', text: sec.name });
+    if (!sec.isDefault) name.addEventListener('dblclick', function (e) {
+      e.stopPropagation();
+      const inp = PP.el('input', { class: 'sec-rename', value: sec.name });
+      name.replaceWith(inp); inp.focus(); inp.select();
+      function commit() { PP.renameSection(sec.start, inp.value.trim() || sec.name); }
+      inp.addEventListener('blur', commit);
+      inp.addEventListener('keydown', function (ev) { ev.stopPropagation(); if (ev.key === 'Enter') inp.blur(); if (ev.key === 'Escape') { inp.value = sec.name; inp.blur(); } });
+    });
+    h.appendChild(tri); h.appendChild(name);
+    h.appendChild(PP.el('span', { class: 'sec-count', text: String(sec.count) }));
+    h.addEventListener('click', function () { PP.goToSlide(sec.start); });
+    h.addEventListener('contextmenu', function (e) { e.preventDefault(); PP.openSectionMenu(e.clientX, e.clientY, sec); });
+    return h;
+  }
 
   /* ---------- slide sorter ---------- */
   PP.renderSorter = function () {

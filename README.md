@@ -93,6 +93,14 @@ PowerPoint keyboard shortcuts. **No install, no build step.**
 - **Header & Footer** (Insert ▸ Header & Footer) — slide **number**, **date**, and **footer** text, with
   "don't show on title slide"; rendered on slides, thumbnails and in the show.
 
+**Sections, Slide Size & Tell Me**
+- **Sections** (Home ▸ Section / right-click a slide) — group slides into named, **collapsible** sections
+  in the thumbnail panel; add, rename (double-click), remove, collapse/expand all.
+- **Slide Size** (Design ▸ Slide Size) — switch **Standard 4:3 ↔ Widescreen 16:9** or set a custom size,
+  with optional content scaling; persists and presents at the chosen aspect.
+- **"Tell Me what you want to do"** search box — type a command (e.g. "bold", "insert chart",
+  "slide show") and run it from the dropdown.
+
 **Slides**
 - New / duplicate / delete / **drag-reorder** in the thumbnail panel, **right-click slide menu**,
   **layouts** (Title, Title+Content, Section, Two Content, Title Only, Blank, Caption), **Slide Sorter** view.

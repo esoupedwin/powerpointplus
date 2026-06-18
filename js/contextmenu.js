@@ -167,6 +167,44 @@
     }));
   };
 
+  /* ---------- section menu (header right-click or Home ▸ Section) ---------- */
+  PP.sectionItems = function (sec) {
+    const items = [];
+    items.push({ label: 'Add Section', run: function () { PP.addSection(S.current); } });
+    if (sec && !sec.isDefault) {
+      items.push({ label: 'Rename Section', run: function () { startRenameHeader(sec.start); } });
+      items.push({ label: 'Remove Section', run: function () { PP.removeSection(sec.start); } });
+    }
+    items.push({ label: 'Remove All Sections', run: function () { PP.removeAllSections(); } });
+    items.push('-');
+    items.push({ label: 'Collapse All', run: function () { PP.setAllSectionsCollapsed(true); } });
+    items.push({ label: 'Expand All', run: function () { PP.setAllSectionsCollapsed(false); } });
+    return items;
+  };
+  function startRenameHeader(start) {
+    const h = document.querySelector('.section-header[data-start="' + start + '"] .sec-name');
+    if (h) { const ev = new MouseEvent('dblclick', { bubbles: true }); h.dispatchEvent(ev); }
+  }
+  PP.openSectionMenu = function (x, y, sec) { showCtxAt(x, y, PP.sectionItems(sec)); };
+  PP.openSectionMenuAnchor = function (anchor) {
+    const secs = PP.computeSections() || [];
+    const start = PP.sectionStartFor ? PP.sectionStartFor(S.current) : 0;
+    const sec = secs.find(function (s) { return s.start === start; });
+    menu(anchor, PP.sectionItems(sec).map(function (it) { return it === '-' ? '-' : { label: it.label, run: it.run }; }));
+  };
+  function showCtxAt(x, y, items) {
+    const cm = document.getElementById('context-menu'); cm.innerHTML = '';
+    items.forEach(function (it) {
+      if (it === '-') { cm.appendChild(PP.el('div', { class: 'ctx-sep' })); return; }
+      const row = PP.el('div', { class: 'ctx-item' }, [PP.el('span', { text: it.label })]);
+      row.addEventListener('click', function () { cm.classList.add('hidden'); it.run(); });
+      cm.appendChild(row);
+    });
+    cm.classList.remove('hidden');
+    cm.style.left = Math.min(x, innerWidth - 220) + 'px';
+    cm.style.top = Math.min(y, innerHeight - cm.offsetHeight - 10) + 'px';
+  }
+
   /* ---------- slide (thumbnail) context menu ---------- */
   function showSlideMenu(x, y, idx) {
     PP.goToSlide(idx);
@@ -182,6 +220,7 @@
       { label: 'Move Slide Up', run: function () { PP.moveSlide(idx, Math.max(0, idx - 1)); } },
       { label: 'Move Slide Down', run: function () { PP.moveSlide(idx, Math.min(S.doc.slides.length - 1, idx + 1)); } },
       '-',
+      { label: 'Add Section', run: function () { PP.addSection(idx); } },
       { label: 'Format Background…', run: function () { PP.gotoTab('design'); } },
       { label: 'Delete Slide', run: function () { PP.deleteSlide(idx); }, key: 'Del' },
     ];
@@ -429,6 +468,33 @@
       hf.number = numRow._cb.checked; hf.footer = footRow._cb.checked; hf.footerText = footText.value.trim();
       hf.dontShowTitle = titleRow._cb.checked;
       PP.commit('Header & Footer'); overlay.remove();
+    } }));
+    dlg.appendChild(btns);
+    overlay.appendChild(dlg);
+    overlay.addEventListener('mousedown', function (e) { if (e.target === overlay) overlay.remove(); });
+    document.body.appendChild(overlay);
+  };
+
+  /* ---------- custom slide size dialog ---------- */
+  PP.openSlideSizeDialog = function () {
+    const overlay = PP.el('div', { class: 'modal-overlay' });
+    const dlg = PP.el('div', { class: 'modal', style: 'min-width:340px' });
+    dlg.appendChild(PP.el('div', { class: 'modal-title', text: 'Slide Size' }));
+    const body = PP.el('div', { class: 'modal-body', style: 'display:flex;flex-direction:column;gap:10px' });
+    const wIn = PP.el('input', { type: 'number', value: PP.SLIDE_W, style: 'width:90px' });
+    const hIn = PP.el('input', { type: 'number', value: PP.SLIDE_H, style: 'width:90px' });
+    body.appendChild(PP.el('label', { text: 'Width (px):' })); body.appendChild(wIn);
+    body.appendChild(PP.el('label', { text: 'Height (px):' })); body.appendChild(hIn);
+    const scaleLbl = PP.el('label', { style: 'display:flex;gap:8px;align-items:center;font-size:13px' });
+    const scaleCb = PP.el('input', { type: 'checkbox' }); scaleCb.checked = true;
+    scaleLbl.appendChild(scaleCb); scaleLbl.appendChild(document.createTextNode('Scale content to fit'));
+    body.appendChild(scaleLbl);
+    dlg.appendChild(body);
+    const btns = PP.el('div', { class: 'modal-btns' });
+    btns.appendChild(PP.el('button', { class: 'btn-secondary', text: 'Cancel', onclick: function () { overlay.remove(); } }));
+    btns.appendChild(PP.el('button', { class: 'btn-primary', text: 'OK', onclick: function () {
+      const w = Math.max(200, parseInt(wIn.value) || 1280), h = Math.max(150, parseInt(hIn.value) || 720);
+      PP.setSlideSize(w, h, scaleCb.checked); overlay.remove();
     } }));
     dlg.appendChild(btns);
     overlay.appendChild(dlg);

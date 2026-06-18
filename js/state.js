@@ -127,8 +127,27 @@
     return {
       title: 'Presentation1',
       theme: { name: 'Office', accent: '#4472C4', bg: '#FFFFFF', font: 'Calibri' },
+      size: { w: 1280, h: 720 },
       slides: [PP.titleSlide()],
     };
+  };
+
+  PP.setSlideSize = function (w, h, scaleObjects) {
+    const ow = PP.SLIDE_W, oh = PP.SLIDE_H;
+    if (w === ow && h === oh) return;
+    PP.SLIDE_W = w; PP.SLIDE_H = h;
+    State.doc.size = { w: w, h: h };
+    if (scaleObjects) {
+      const sx = w / ow, sy = h / oh, fs = Math.min(sx, sy);
+      State.doc.slides.forEach(function (s) {
+        s.objects.forEach(function (o) {
+          o.x *= sx; o.y *= sy; o.w *= sx; o.h *= sy;
+          if (o.fontSize) o.fontSize = Math.round(o.fontSize * fs);
+        });
+      });
+    }
+    PP.commit('Slide Size');
+    PP.applyZoom(); PP.render(); PP.fitToWindow();
   };
 
   /* ---------- accessors ---------- */
@@ -258,6 +277,57 @@
     PP.emit('slidechange');
   };
 
+  /* ---------- sections ---------- */
+  // A section is marked on the slide that STARTS it: slide.section = { name, collapsed }.
+  PP.hasSections = function () { return State.doc.slides.some(function (s) { return s.section; }); };
+  PP.computeSections = function () {
+    const slides = State.doc.slides;
+    if (!PP.hasSections()) return null;
+    const list = []; let cur = null;
+    slides.forEach(function (s, i) {
+      if (i === 0 && !s.section) { cur = { start: 0, name: 'Default Section', count: 0, isDefault: true, collapsed: !!State.doc._defCollapsed }; list.push(cur); }
+      if (s.section) { cur = { start: i, name: s.section.name, count: 0, collapsed: !!s.section.collapsed, marker: s }; list.push(cur); }
+      if (cur) cur.count++;
+    });
+    return list;
+  };
+  PP.sectionStartFor = function (idx) {
+    idx = (idx == null) ? State.current : idx;
+    for (let i = idx; i >= 0; i--) { if (State.doc.slides[i].section) return i; }
+    return 0;
+  };
+  PP.addSection = function (atIndex, name) {
+    atIndex = (atIndex == null) ? State.current : atIndex;
+    const s = State.doc.slides[atIndex]; if (!s) return;
+    s.section = { name: name || 'Untitled Section', collapsed: false };
+    PP.commit('Add Section'); PP.emit('slidechange');
+  };
+  PP.renameSection = function (startIndex, name) {
+    const s = State.doc.slides[startIndex];
+    if (s && s.section) { s.section.name = name; PP.commit('Rename Section'); }
+    else if (startIndex === 0) { /* default section can't be renamed */ }
+    PP.emit('slidechange');
+  };
+  PP.removeSection = function (startIndex) {
+    const s = State.doc.slides[startIndex];
+    if (s && s.section) { s.section = null; PP.commit('Remove Section'); PP.emit('slidechange'); }
+  };
+  PP.removeAllSections = function () {
+    State.doc.slides.forEach(function (s) { s.section = null; });
+    State.doc._defCollapsed = false;
+    PP.commit('Remove All Sections'); PP.emit('slidechange');
+  };
+  PP.toggleSectionCollapsed = function (sec) {
+    if (sec.isDefault) State.doc._defCollapsed = !State.doc._defCollapsed;
+    else if (sec.marker) sec.marker.section.collapsed = !sec.marker.section.collapsed;
+    PP.renderThumbs();
+  };
+  PP.setAllSectionsCollapsed = function (v) {
+    State.doc._defCollapsed = v;
+    State.doc.slides.forEach(function (s) { if (s.section) s.section.collapsed = v; });
+    PP.renderThumbs();
+  };
+
   /* ---------- object ops ---------- */
   PP.addObject = function (obj, opts) {
     PP.slide().objects.push(obj);
@@ -322,6 +392,8 @@
   /* ---------- init ---------- */
   PP.initState = function (doc) {
     State.doc = doc || PP.newDoc();
+    if (State.doc.size) { PP.SLIDE_W = State.doc.size.w; PP.SLIDE_H = State.doc.size.h; }
+    else { PP.SLIDE_W = 1280; PP.SLIDE_H = 720; State.doc.size = { w: 1280, h: 720 }; }
     State.current = 0;
     State.selection = [];
     State.history = [];
