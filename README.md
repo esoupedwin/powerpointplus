@@ -100,6 +100,9 @@ PowerPoint keyboard shortcuts. **No install, no build step.**
   with optional content scaling; persists and presents at the chosen aspect.
 - **"Tell Me what you want to do"** search box — type a command (e.g. "bold", "insert chart",
   "slide show") and run it from the dropdown.
+- **Insert ▸ Symbol** — categorized glyph picker (Math, Greek, Arrows, Currency, Punctuation, Symbols);
+  inserts at the text caret or as a new text box. **Insert ▸ Equation** — built-in formula gallery
+  (quadratic, Pythagorean, Euler's identity…) plus a math-symbol palette.
 
 **Slides**
 - New / duplicate / delete / **drag-reorder** in the thumbnail panel, **right-click slide menu**,

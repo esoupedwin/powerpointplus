@@ -94,6 +94,16 @@ select.r-size,input.r-size{width:46px;text-align:center}
 .r-menu .mi:hover{background:var(--hover)}
 .r-menu .mi .ico{width:18px;text-align:center}
 
+/* Symbol picker */
+.symbol-pop{position:fixed;z-index:6000;background:#fff;border:1px solid var(--line-strong);box-shadow:0 4px 16px rgba(0,0,0,.2);border-radius:6px;padding:6px;width:312px}
+.sym-tabs{display:flex;gap:2px;flex-wrap:wrap;margin-bottom:6px;border-bottom:1px solid var(--line);padding-bottom:6px}
+.sym-tab{border:0;background:transparent;font-size:11px;padding:3px 7px;border-radius:3px;cursor:pointer;color:var(--muted)}
+.sym-tab:hover{background:var(--hover)}
+.sym-tab.active{background:var(--pp-orange);color:#fff}
+.sym-grid{display:grid;grid-template-columns:repeat(10,1fr);gap:2px;max-height:220px;overflow:auto}
+.sym-cell{width:28px;height:28px;border:1px solid transparent;background:#fff;border-radius:3px;cursor:pointer;font-size:16px;line-height:1;display:flex;align-items:center;justify-content:center}
+.sym-cell:hover{background:#cfe4ff;border-color:#9cc4f5}
+
 /* shape palette */
 .shape-grid{display:grid;grid-template-columns:repeat(8,26px);gap:3px;max-width:240px}
 .shape-cell{width:26px;height:26px;display:flex;align-items:center;justify-content:center;cursor:pointer;border-radius:3px;border:1px solid transparent}

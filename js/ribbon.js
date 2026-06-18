@@ -99,6 +99,7 @@
       case 'transitionAll': PP.setTransition(arg, true); break;
       case 'animation': PP.setAnimation(arg); break;
       case 'previewAnim': PP.previewAnimations(); break;
+      case 'symbol': case 'equation': break; // opened via the anchored ribbon buttons
       case 'animationPane': PP.toggleAnimationPane(); break;
       case 'view': PP.setView(arg); break;
       case 'fit': PP.fitToWindow(); break;
@@ -478,7 +479,7 @@
       group('Images', [bigBtn('&#128444;', 'Pictures', 'picture')]),
       group('Illustrations', [fullShapeButton(), smartArtButton(), chartButton()]),
       group('Text', [bigBtn('&#65120;', 'Text\nBox', 'textBox'), bigBtn('&#9000;', 'Header\n& Footer', 'headerFooter'), bigBtn('&#127760;', 'WordArt', 'wordart')]),
-      group('Symbols', [bigBtn('&#8721;', 'Equation', 'equation'), bigBtn('&#937;', 'Symbol', 'symbol')]),
+      group('Symbols', [equationButton(), symbolButton()]),
       group('Media', bigBtn('&#9658;', 'Video', 'video')),
     ];
   }
@@ -492,6 +493,17 @@
     return b;
   }
   function chartIcon(id) { return { column: '&#128202;', bar: '&#9646;', line: '&#128200;', area: '&#9650;', pie: '&#9685;' }[id] || '&#128202;'; }
+
+  function equationButton() {
+    const b = bigBtn('&#8721;', 'Equation', 'equation');
+    b.onclick = function () { PP.openEquationMenu(b); };
+    return b;
+  }
+  function symbolButton() {
+    const b = bigBtn('&#937;', 'Symbol', 'symbol');
+    b.onclick = function () { PP.openSymbolPicker(b); };
+    return b;
+  }
 
   function smartArtButton() {
     const b = bigBtn('&#9783;', 'SmartArt', 'smartart');

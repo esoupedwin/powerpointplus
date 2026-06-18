@@ -262,6 +262,29 @@
     else if (kind === 'align') o.align = val;
   }
 
+  // Insert a glyph/equation: at the caret if editing text, else as a new text box.
+  PP.insertSymbolText = function (str, opts) {
+    opts = opts || {};
+    if (S.editingId) {
+      const node = document.querySelector('#slide-objects .obj.editing .obj-text');
+      if (node) {
+        node.focus();
+        document.execCommand('insertText', false, str);
+        const o = PP.findObj(S.editingId);
+        if (o) { o.html = node.innerHTML; o.text = node.innerText.replace(/\n$/, ''); o._touched = true; }
+        PP.renderThumbs();
+        return;
+      }
+    }
+    const w = opts.w || 420, h = opts.h || 90;
+    const o = PP.makeObject('text', {
+      x: (PP.SLIDE_W - w) / 2, y: (PP.SLIDE_H - h) / 2, w: w, h: h,
+      text: str, _touched: true, fill: 'none', stroke: 'none',
+      fontSize: opts.fontSize || 32, align: 'center', valign: 'middle', fontFamily: 'Cambria'
+    });
+    PP.addObject(o);
+  };
+
   PP.applyEditorStyle = function () { PP.refreshActiveEditor(); };
   PP.refreshActiveEditor = function () {
     if (!S.editingId || !activeEditor) return;

@@ -475,6 +475,64 @@
     document.body.appendChild(overlay);
   };
 
+  /* ---------- Insert ▸ Symbol ---------- */
+  const SYMBOLS = {
+    Math: '+ − × ÷ = ≠ ≈ ≡ ≤ ≥ ± ∓ ∞ ∝ ∑ ∏ ∫ ∮ √ ∛ ∂ ∇ ∆ ∈ ∉ ∋ ⊂ ⊃ ⊆ ⊇ ∪ ∩ ∅ ∀ ∃ ∄ ∴ ∵ ∠ ⊥ ∥ ° ′ ″ · ⋅ ¬ ∧ ∨ ⊕ ⊗ ℝ ℕ ℤ ℚ ℂ'.split(' '),
+    Greek: 'α β γ δ ε ζ η θ ι κ λ μ ν ξ ο π ρ σ τ υ φ χ ψ ω Γ Δ Θ Λ Ξ Π Σ Φ Ψ Ω'.split(' '),
+    Arrows: '← → ↑ ↓ ↔ ↕ ⇐ ⇒ ⇑ ⇓ ⇔ ↩ ↪ ↺ ↻ ➜ ➔ ⟶ ⟵ ⤴ ⤵'.split(' '),
+    Currency: '$ € £ ¥ ¢ ₹ ₩ ₽ ₿ ¤ ฿ ₫ ₪'.split(' '),
+    Punctuation: '… — – • ◦ ‣ ¶ § † ‡ « » “ ” ‘ ’ ‰ ′ ″ ※ ⁂'.split(' '),
+    Symbols: '™ © ® ℠ ✓ ✔ ✗ ✘ ★ ☆ ♥ ♦ ♣ ♠ ☀ ☁ ☂ ☎ ✉ ✂ ✏ ⚙ ⚠ ☑ ☐ ☒ № ℃ ℉ ½ ¼ ¾ ⅓ ⅔'.split(' '),
+  };
+  PP.openSymbolPicker = function (anchor) {
+    anchor = anchor || document.getElementById('ribbon-body') || document.body;
+    PP.hideMenus();
+    const pop = PP.el('div', { class: 'symbol-pop' });
+    const tabs = PP.el('div', { class: 'sym-tabs' });
+    const grid = PP.el('div', { class: 'sym-grid' });
+    const cats = Object.keys(SYMBOLS);
+    function show(cat) {
+      grid.innerHTML = '';
+      SYMBOLS[cat].forEach(function (g) {
+        const cell = PP.el('button', { class: 'sym-cell', text: g, title: g });
+        cell.addEventListener('click', function () { PP.insertSymbolText(g); });
+        grid.appendChild(cell);
+      });
+      PP.$$('.sym-tab', tabs).forEach(function (t) { t.classList.toggle('active', t.textContent === cat); });
+    }
+    cats.forEach(function (c) {
+      const t = PP.el('button', { class: 'sym-tab', text: c, onclick: function () { show(c); } });
+      tabs.appendChild(t);
+    });
+    pop.appendChild(tabs); pop.appendChild(grid);
+    pop.addEventListener('mousedown', function (e) { if (e.target.closest('.sym-cell')) e.preventDefault(); }); // keep caret
+    track(pop); positionPop(pop, anchor); show(cats[0]);
+  };
+
+  /* ---------- Insert ▸ Equation ---------- */
+  const EQUATIONS = [
+    ['Quadratic Formula', 'x = (−b ± √(b² − 4ac)) / 2a'],
+    ['Pythagorean Theorem', 'a² + b² = c²'],
+    ['Binomial Theorem', '(x + a)ⁿ = Σₖ₌₀ⁿ C(n,k) xᵏ aⁿ⁻ᵏ'],
+    ['Area of Circle', 'A = πr²'],
+    ['Sum 1..n', 'Σᵢ₌₁ⁿ i = n(n + 1) / 2'],
+    ["Euler's Identity", 'e^(iπ) + 1 = 0'],
+    ['Fourier Series', 'f(x) = a₀ + Σₙ₌₁∞ (aₙ cos nx + bₙ sin nx)'],
+    ['Limit Definition', "f′(x) = limₕ→₀ (f(x+h) − f(x)) / h"],
+  ];
+  PP.openEquationMenu = function (anchor) {
+    anchor = anchor || document.getElementById('ribbon-body') || document.body;
+    const items = EQUATIONS.map(function (e) {
+      return { icon: '&#8721;', label: e[0], run: function () { PP.insertSymbolText(e[1], { w: 560, fontSize: 28 }); } };
+    });
+    items.push('-');
+    items.push({ icon: '&#10133;', label: 'Insert New Equation', run: function () {
+      const o = PP.insertSymbolText('Type equation here', { w: 420, fontSize: 28 });
+    } });
+    items.push({ icon: '&#937;', label: 'Math Symbols…', run: function () { PP.openSymbolPicker(anchor); } });
+    menu(anchor, items);
+  };
+
   /* ---------- custom slide size dialog ---------- */
   PP.openSlideSizeDialog = function () {
     const overlay = PP.el('div', { class: 'modal-overlay' });
