@@ -4,6 +4,9 @@ A faithful, browser-based clone of Microsoft PowerPoint — ribbon UI, slide edi
 shapes/text/images, presentation mode, transitions & animations, and the real
 PowerPoint keyboard shortcuts. **No install, no build step.**
 
+> **Always loads the latest code.** `index.html` cache-busts its CSS/JS on every load, so a normal
+> refresh always picks up changes — no need to hard-refresh.
+
 ## Run it
 
 - **Easiest:** double-click `Launch PowerPoint.bat` (or just open `index.html` in any
