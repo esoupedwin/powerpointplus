@@ -144,6 +144,12 @@ body{
 }
 .rotate-stem{position:absolute;width:1px;background:var(--sel);pointer-events:none}
 
+/* Media (video / audio) */
+.media-box{display:flex;align-items:center;justify-content:center}
+.media-play{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:54px;height:54px;border-radius:50%;border:0;background:rgba(0,0,0,.55);color:#fff;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;pointer-events:auto;z-index:3}
+.media-play:hover{background:rgba(0,0,0,.75)}
+.audio-icon{font-size:64px;color:#7a7a7a}
+
 /* Comments */
 .comment-marker{background:#7a3df5;color:#fff;border:1px solid #fff;border-radius:10px 10px 10px 2px;text-align:center;font-weight:700;cursor:pointer;z-index:45;box-shadow:0 1px 3px rgba(0,0,0,.3)}
 .comment-marker.active{background:#5a1fd0;outline:2px solid #b79cff}

@@ -90,6 +90,11 @@ PowerPoint keyboard shortcuts. **No install, no build step.**
 - **Picture Styles** gallery (frame, rounded, drop shadow, soft edge…), **Picture Border**,
   **Picture Effects**, plus the **Arrange** and **Size** groups.
 
+**Media** (Insert ▸ Video / Audio)
+- **Video** from a file on your device or an **online URL** (YouTube/Vimeo embedded automatically, or a
+  direct video link). **Audio** from a file (speaker icon). A play overlay previews in the editor;
+  full media **controls** are enabled during the slideshow.
+
 **Comments** (Review tab)
 - **New Comment** drops a draggable marker on the slide and opens the **Comments pane** — type the
   comment, **reply** to build a thread, **resolve** (hides the marker) or **delete**, step **Previous/Next**.
@@ -195,6 +200,6 @@ js/app.js             bootstrap & wiring
 ## Known limitations (vs. real PowerPoint)
 - Save format is JSON (`.pptx.json`), not the binary OOXML `.pptx`.
 - Picture glow/soft-edges are CSS-filter approximations.
-- Embedded video/audio and master-slide/theme editing are not yet implemented; save is JSON, not binary `.pptx`.
+- Master-slide / theme editing is not yet implemented; save is JSON, not binary `.pptx`.
 
 These are the natural next steps if you want to keep extending it.

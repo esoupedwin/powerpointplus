@@ -65,6 +65,15 @@
       });
       this.value = '';
     });
+    // video / audio insert
+    document.getElementById('file-video').addEventListener('change', function () {
+      if (this.files[0]) { const r = new FileReader(); r.onload = function (e) { PP.insertVideoData(e.target.result); }; r.readAsDataURL(this.files[0]); }
+      this.value = '';
+    });
+    document.getElementById('file-audio').addEventListener('change', function () {
+      if (this.files[0]) { const r = new FileReader(); r.onload = function (e) { PP.insertAudioData(e.target.result); }; r.readAsDataURL(this.files[0]); }
+      this.value = '';
+    });
     // open file
     document.getElementById('file-open').addEventListener('change', function () {
       if (this.files[0]) PP.openFile(this.files[0]);

@@ -533,6 +533,26 @@
     menu(anchor, items);
   };
 
+  /* ---------- online video dialog ---------- */
+  PP.openVideoURLDialog = function () {
+    const overlay = PP.el('div', { class: 'modal-overlay' });
+    const dlg = PP.el('div', { class: 'modal', style: 'min-width:440px' });
+    dlg.appendChild(PP.el('div', { class: 'modal-title', text: 'Insert Video from Website' }));
+    const body = PP.el('div', { class: 'modal-body', style: 'display:flex;flex-direction:column;gap:8px' });
+    body.appendChild(PP.el('label', { text: 'Paste a YouTube, Vimeo, or direct video URL:' }));
+    const url = PP.el('input', { type: 'text', placeholder: 'https://www.youtube.com/watch?v=…', style: 'width:100%' });
+    body.appendChild(url);
+    dlg.appendChild(body);
+    const btns = PP.el('div', { class: 'modal-btns' });
+    btns.appendChild(PP.el('button', { class: 'btn-secondary', text: 'Cancel', onclick: function () { overlay.remove(); } }));
+    btns.appendChild(PP.el('button', { class: 'btn-primary', text: 'Insert', onclick: function () { const u = url.value.trim(); if (u) PP.insertVideoURL(u); overlay.remove(); } }));
+    dlg.appendChild(btns);
+    overlay.appendChild(dlg);
+    overlay.addEventListener('mousedown', function (e) { if (e.target === overlay) overlay.remove(); });
+    document.body.appendChild(overlay);
+    setTimeout(function () { url.focus(); }, 0);
+  };
+
   /* ---------- custom slide size dialog ---------- */
   PP.openSlideSizeDialog = function () {
     const overlay = PP.el('div', { class: 'modal-overlay' });

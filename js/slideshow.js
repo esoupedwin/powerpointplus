@@ -200,6 +200,12 @@
       if (o.hidden) return;
       const n = PP.objNode(o);
       n.style.pointerEvents = 'none';
+      if (o.type === 'video' || o.type === 'audio') {
+        n.style.pointerEvents = 'auto';
+        const m = n.querySelector('video,audio,iframe');
+        if (m) { m.style.pointerEvents = 'auto'; if (m.tagName !== 'IFRAME') m.controls = true; }
+        const ov = n.querySelector('.media-play'); if (ov && m && m.tagName !== 'IFRAME') ov.remove();
+      }
       if (o.hyperlink) {
         n.style.pointerEvents = 'auto'; n.style.cursor = 'pointer';
         n.addEventListener('click', function (ev) {

@@ -217,6 +217,32 @@
     return box;
   }
 
+  function mediaContent(o) {
+    const box = PP.el('div', { class: 'media-box', style: 'position:absolute;inset:0;overflow:hidden;background:' + (o.type === 'audio' ? '#f3f2f1' : '#000') + (o.type === 'audio' ? ';border-radius:8px' : '') });
+    let media;
+    if (o.type === 'video') {
+      if (o.embed) { media = PP.el('iframe', { src: o.embed, allow: 'autoplay; fullscreen', style: 'width:100%;height:100%;border:0;pointer-events:none' }); }
+      else { media = PP.el('video', { src: o.src, preload: 'metadata', playsinline: '', style: 'width:100%;height:100%;object-fit:contain;background:#000;pointer-events:none' }); }
+      box.appendChild(media);
+    } else { // audio
+      box.appendChild(PP.el('div', { class: 'audio-icon', html: '&#128266;' }));
+      media = PP.el('audio', { src: o.src, preload: 'metadata', style: 'display:none' });
+      box.appendChild(media);
+    }
+    const play = PP.el('button', { class: 'media-play', html: '&#9654;' });
+    play.addEventListener('click', function (e) {
+      e.stopPropagation();
+      if (o.embed) { const f = box.querySelector('iframe'); f.style.pointerEvents = 'auto'; f.src = f.src + (f.src.indexOf('?') >= 0 ? '&' : '?') + 'autoplay=1'; play.style.display = 'none'; return; }
+      const m = box.querySelector('video,audio');
+      if (!m) return;
+      if (m.tagName === 'VIDEO') { m.controls = true; m.style.pointerEvents = 'auto'; }
+      if (m.paused) { m.play(); play.innerHTML = '&#10074;&#10074;'; } else { m.pause(); play.innerHTML = '&#9654;'; }
+    });
+    box.appendChild(play);
+    return box;
+  }
+  PP.mediaContent = mediaContent;
+
   PP.renderObjectContent = function (o) {
     const wrap = PP.el('div', { class: 'obj-content' });
     if (o.effects) wrap.style.filter = effectFilter(o.effects);
@@ -231,6 +257,8 @@
       wrap.appendChild(PP.chartSVG(o));
     } else if (o.type === 'smartart') {
       wrap.appendChild(PP.smartartContent(o));
+    } else if (o.type === 'video' || o.type === 'audio') {
+      wrap.appendChild(mediaContent(o));
     } else {
       wrap.appendChild(shapeSVG(o));
       // shapes can also hold text

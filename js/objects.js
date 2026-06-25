@@ -215,6 +215,33 @@
     { name: 'No Style Grid', headerFill: '#FFFFFF', headerColor: '#000000', band1: '#FFFFFF', band2: '#FFFFFF', border: '#000000', textColor: '#000000' },
   ];
 
+  /* ---------- media ---------- */
+  PP.videoEmbedURL = function (url) {
+    if (!url) return null;
+    let m = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([\w-]{6,})/);
+    if (m) return 'https://www.youtube.com/embed/' + m[1];
+    m = url.match(/vimeo\.com\/(\d+)/);
+    if (m) return 'https://player.vimeo.com/video/' + m[1];
+    return null;
+  };
+  PP.insertVideoURL = function (url) {
+    const embed = PP.videoEmbedURL(url);
+    const w = 640, h = 360;
+    const o = PP.makeObject('video', { x: (PP.SLIDE_W - w) / 2, y: (PP.SLIDE_H - h) / 2, w: w, h: h,
+      src: embed ? null : url, embed: embed || null, fill: 'none', stroke: 'none' });
+    return PP.addObject(o);
+  };
+  PP.insertVideoData = function (src) {
+    const w = 640, h = 360;
+    const o = PP.makeObject('video', { x: (PP.SLIDE_W - w) / 2, y: (PP.SLIDE_H - h) / 2, w: w, h: h, src: src, embed: null, fill: 'none', stroke: 'none' });
+    return PP.addObject(o);
+  };
+  PP.insertAudioData = function (src) {
+    const w = 160, h = 160;
+    const o = PP.makeObject('audio', { x: (PP.SLIDE_W - w) / 2, y: (PP.SLIDE_H - h) / 2, w: w, h: h, src: src, fill: 'none', stroke: 'none' });
+    return PP.addObject(o);
+  };
+
   PP.insertTable = function (rows, cols) {
     rows = rows || 3; cols = cols || 4;
     const w = Math.min(960, cols * 200), h = Math.min(120 + rows * 8, rows * 50);

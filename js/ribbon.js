@@ -106,6 +106,7 @@
       case 'nextComment': PP.stepComment(1); break;
       case 'deleteComment': PP.deleteActiveComment(); break;
       case 'spelling': PP.status('No spelling errors found.'); break;
+      case 'video': case 'audio': break; // opened via anchored ribbon buttons
       case 'animationPane': PP.toggleAnimationPane(); break;
       case 'view': PP.setView(arg); break;
       case 'fit': PP.fitToWindow(); break;
@@ -486,8 +487,27 @@
       group('Illustrations', [fullShapeButton(), smartArtButton(), chartButton()]),
       group('Text', [bigBtn('&#65120;', 'Text\nBox', 'textBox'), bigBtn('&#9000;', 'Header\n& Footer', 'headerFooter'), bigBtn('&#127760;', 'WordArt', 'wordart')]),
       group('Symbols', [equationButton(), symbolButton()]),
-      group('Media', bigBtn('&#9658;', 'Video', 'video')),
+      group('Media', [videoButton(), audioButton()]),
     ];
+  }
+  function videoButton() {
+    const b = bigBtn('&#9654;', 'Video', 'video');
+    b.onclick = function () {
+      PP.openMenu(b, [
+        { icon: '&#128193;', label: 'This Device…', run: function () { document.getElementById('file-video').click(); } },
+        { icon: '&#127760;', label: 'Online Video…', run: function () { PP.openVideoURLDialog(); } },
+      ]);
+    };
+    return b;
+  }
+  function audioButton() {
+    const b = bigBtn('&#128266;', 'Audio', 'audio');
+    b.onclick = function () {
+      PP.openMenu(b, [
+        { icon: '&#128193;', label: 'Audio on My PC…', run: function () { document.getElementById('file-audio').click(); } },
+      ]);
+    };
+    return b;
   }
   function chartButton() {
     const b = bigBtn('&#128202;', 'Chart', 'chart');
