@@ -136,7 +136,7 @@
 
   // shapes grouped into PowerPoint-style categories
   PP.SHAPE_CATEGORIES = [
-    { name: 'Lines', shapes: ['line', 'arrow'] },
+    { name: 'Lines', shapes: ['line', 'arrow', 'curveTool', 'freeformTool', 'scribbleTool'] },
     { name: 'Rectangles', shapes: ['rect', 'roundRect', 'parallelogram', 'trapezoid', 'Lshape', 'frame'] },
     { name: 'Basic Shapes', shapes: ['ellipse', 'triangle', 'rtriangle', 'diamond', 'pentagon', 'hexagon', 'octagon', 'plus', 'donut', 'cylinder', 'heart', 'cloud', 'lightning', 'sun', 'moon'] },
     { name: 'Block Arrows', shapes: ['arrowRight', 'arrowLeft', 'arrowUp', 'arrowDown', 'doubleArrow', 'chevron', 'homePlate'] },
@@ -153,7 +153,8 @@
     cylinder: 'Cylinder', frame: 'Frame', Lshape: 'L-Shape', parallelogram: 'Parallelogram',
     trapezoid: 'Trapezoid', callout: 'Speech Bubble', arrowRight: 'Right Arrow', arrowLeft: 'Left Arrow',
     arrowUp: 'Up Arrow', arrowDown: 'Down Arrow', doubleArrow: 'Left-Right Arrow', chevron: 'Chevron',
-    homePlate: 'Pentagon Arrow', ribbon: 'Ribbon', wave: 'Wave', line: 'Line', arrow: 'Arrow'
+    homePlate: 'Pentagon Arrow', ribbon: 'Ribbon', wave: 'Wave', line: 'Line', arrow: 'Arrow',
+    curveTool: 'Curve', freeformTool: 'Freeform: Shape', scribbleTool: 'Freeform: Scribble'
   };
 
   /* ---------- Bézier node model (for Edit Points) ---------- */

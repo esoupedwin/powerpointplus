@@ -50,6 +50,7 @@
     const inp = PP.el('input', { type: 'color', value: '#4472C4', oninput: function () { onPick(this.value); }, title: 'More Colors' });
     more.appendChild(inp);
     more.appendChild(PP.el('button', { class: 'rbtn small', html: '&#128167; Eyedropper', title: 'Pick a color from the screen', onclick: function () { eyedropper(onPick); } }));
+    if (cmd === 'fillColor') more.appendChild(PP.el('button', { class: 'rbtn small', html: '&#128444; Picture…', title: 'Fill with a picture', onclick: function () { PP.hideMenus(); pickFillPicture(onPick); } }));
     pop.appendChild(more);
     track(pop);
     positionPop(pop, anchor);
@@ -78,6 +79,15 @@
       { type: 'linear', angle: 135, stops: [{ c: '#ED7D31', p: 0 }, { c: '#C00000', p: 1 }] },
       { type: 'linear', angle: 90, stops: [{ c: '#70AD47', p: 0 }, { c: '#1F3864', p: 1 }] },
     ];
+  }
+  function pickFillPicture(onPick) {
+    const inp = PP.el('input', { type: 'file', accept: 'image/*', style: 'display:none' });
+    document.body.appendChild(inp);
+    inp.addEventListener('change', function () {
+      if (inp.files[0]) { const r = new FileReader(); r.onload = function (e) { onPick({ type: 'picture', src: e.target.result }); }; r.readAsDataURL(inp.files[0]); }
+      inp.remove();
+    });
+    inp.click();
   }
   function eyedropper(onPick) {
     PP.hideMenus();
@@ -141,9 +151,15 @@
   };
   function rotateSel(d) { PP.selectedObjs().forEach(function (o) { o.rotation = (o.rotation + d) % 360; }); PP.commit('Rotate'); }
 
+  const TOOL_ICON = {
+    curveTool: 'M2,16 Q7,2 10,10 T18,4',
+    freeformTool: 'M2,16 L7,5 L12,12 L18,3',
+    scribbleTool: 'M2,14 q3,-9 5,-2 q2,7 4,0 q2,-7 5,2'
+  };
   function shapeCellSVG(t) {
     const ns = 'http://www.w3.org/2000/svg';
     const svg = document.createElementNS(ns, 'svg'); svg.setAttribute('viewBox', '0 0 20 20');
+    if (TOOL_ICON[t]) { const p = document.createElementNS(ns, 'path'); p.setAttribute('d', TOOL_ICON[t]); p.setAttribute('fill', 'none'); p.setAttribute('stroke', '#3a5a8a'); p.setAttribute('stroke-width', 1.5); svg.appendChild(p); return svg; }
     const pp = PP.shapePath(t, 18, 18);
     let node;
     if (pp.tag === 'line') { node = document.createElementNS(ns, 'line'); node.setAttribute('x1', 2); node.setAttribute('y1', 16); node.setAttribute('x2', 16); node.setAttribute('y2', 2); node.setAttribute('stroke', '#444'); node.setAttribute('stroke-width', 2); if (t === 'arrow') node.setAttribute('marker-end', ''); }
@@ -157,7 +173,13 @@
       m.appendChild(PP.el('div', { class: 'row-label', style: 'font-size:11px;color:#605e5c;margin:6px 0 4px', text: cat.name }));
       const grid = PP.el('div', { class: 'shape-grid' });
       cat.shapes.forEach(function (t) {
-        const cell = PP.el('div', { class: 'shape-cell', title: PP.SHAPE_NAMES[t] || t, onclick: function () { PP.cmd('insertShape', t); PP.hideMenus(); } });
+        const cell = PP.el('div', { class: 'shape-cell', title: PP.SHAPE_NAMES[t] || t, onclick: function () {
+          PP.hideMenus();
+          if (t === 'freeformTool') PP.armFreeDraw('freeform');
+          else if (t === 'scribbleTool') PP.armFreeDraw('scribble');
+          else if (t === 'curveTool') PP.armFreeDraw('curve');
+          else PP.cmd('insertShape', t);
+        } });
         cell.appendChild(shapeCellSVG(t));
         grid.appendChild(cell);
       });

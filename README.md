@@ -24,7 +24,10 @@ PowerPoint keyboard shortcuts. **No install, no build step.**
   (pick a shape, then drag a crosshair to draw it; a single click drops a default size).
 - **Yellow adjustment handles** (like PowerPoint) on rounded-rect corner radius, block-arrow shaft/head,
   star point depth, parallelogram/trapezoid slant, cross thickness, chevron notch.
-- **Shape Outline** ▸ color, **weight** (½–6 pt) and **dash style** (solid/dashed/dotted/dash-dot).
+- **Shape Outline** ▸ color, **weight** (½–6 pt), **dash style** (solid/dashed/dotted/dash-dot) and
+  **line arrowheads** (begin/end: triangle, open, diamond, oval).
+- **Freeform**, **Curve** and **Scribble** drawing tools (click vertices or draw freehand → editable freeform).
+- **Shape Fill** ▸ solid / **gradient** / **picture** (an image clipped to the shape) / eyedropper / no fill.
 - **Move / resize / rotate** with live handles & rotation handle; **Shift** = constrain/aspect,
   **Ctrl** = resize from center; **Ctrl+drag = duplicate**; **Shift+click** to multi-select;
   marquee select; **smart alignment guides** with snapping.

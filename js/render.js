@@ -88,6 +88,21 @@
   function resolveFill(svg, ns, fill) {
     if (fill === 'none' || fill == null) return 'none';
     if (typeof fill === 'string') return fill;
+    // picture fill: { type:'picture', src }
+    if (fill.type === 'picture') {
+      const id = 'pf' + (++_gradSeq);
+      let defs = svg.querySelector('defs');
+      if (!defs) { defs = document.createElementNS(ns, 'defs'); svg.appendChild(defs); }
+      const pat = document.createElementNS(ns, 'pattern');
+      pat.setAttribute('id', id); pat.setAttribute('patternContentUnits', 'objectBoundingBox');
+      pat.setAttribute('width', '1'); pat.setAttribute('height', '1');
+      const img = document.createElementNS(ns, 'image');
+      img.setAttribute('href', fill.src); img.setAttribute('x', '0'); img.setAttribute('y', '0');
+      img.setAttribute('width', '1'); img.setAttribute('height', '1');
+      img.setAttribute('preserveAspectRatio', 'xMidYMid slice');
+      pat.appendChild(img); defs.appendChild(pat);
+      return 'url(#' + id + ')';
+    }
     // gradient object: { type:'linear'|'radial', angle, stops:[{c,p}] }
     const id = 'g' + (++_gradSeq);
     const grad = document.createElementNS(ns, fill.type === 'radial' ? 'radialGradient' : 'linearGradient');
@@ -170,15 +185,42 @@
       if (o.dash) node.setAttribute('stroke-dasharray', dashArray(o.dash, o.strokeWidth || 1));
       node.setAttribute('vector-effect', 'non-scaling-stroke');
     }
-    if (path.markerEnd) {
-      const defs = document.createElementNS(ns, 'defs');
-      defs.innerHTML = '<marker id="ah_' + o.id + '" markerWidth="10" markerHeight="10" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="' + (o.stroke === 'none' ? o.fill : o.stroke) + '"/></marker>';
-      svg.appendChild(defs);
-      node.setAttribute('marker-end', 'url(#ah_' + o.id + ')');
+    if (path.tag === 'line') {
+      const color = o.stroke === 'none' ? (typeof o.fill === 'string' ? o.fill : '#000') : o.stroke;
+      let endKind = o.arrowEnd !== undefined ? o.arrowEnd : (o.type === 'arrow' || path.markerEnd ? 'triangle' : 'none');
+      let startKind = o.arrowStart || 'none';
+      if (startKind !== 'none' || endKind !== 'none') applyArrowheads(svg, node, ns, o.id, color, startKind, endKind);
     }
     node.setAttribute('opacity', o.opacity != null ? o.opacity : 1);
     svg.appendChild(node);
     return svg;
+  }
+
+  // arrowhead markers for line/arrow objects
+  function markerShape(kind, color) {
+    switch (kind) {
+      case 'triangle': return { d: 'M0,0 L7,3 L0,6 Z', fill: color, stroke: 'none' };
+      case 'open': return { d: 'M0.5,0.5 L7,3 L0.5,5.5', fill: 'none', stroke: color };
+      case 'stealth': return { d: 'M0,0 L7,3 L0,6 L2.2,3 Z', fill: color, stroke: 'none' };
+      case 'diamond': return { d: 'M0,3 L3.5,0 L7,3 L3.5,6 Z', fill: color, stroke: 'none' };
+      case 'oval': return { circle: true, fill: color };
+      default: return null;
+    }
+  }
+  function applyArrowheads(svg, node, ns, oid, color, startKind, endKind) {
+    let defs = svg.querySelector('defs');
+    if (!defs) { defs = document.createElementNS(ns, 'defs'); svg.appendChild(defs); }
+    function make(kind, suffix) {
+      const sh = markerShape(kind, color); if (!sh) return null;
+      const id = 'm_' + oid + '_' + suffix;
+      const inner = sh.circle ? '<circle cx="3" cy="3" r="2.6" fill="' + sh.fill + '"/>'
+        : '<path d="' + sh.d + '" fill="' + sh.fill + '" stroke="' + sh.stroke + '" stroke-width="1.2"/>';
+      const m = '<marker id="' + id + '" markerWidth="9" markerHeight="9" refX="' + (kind === 'oval' ? 3 : 6) + '" refY="3" orient="auto-start-reverse" markerUnits="strokeWidth">' + inner + '</marker>';
+      defs.insertAdjacentHTML('beforeend', m);
+      return 'url(#' + id + ')';
+    }
+    if (startKind !== 'none') { const u = make(startKind, 's'); if (u) node.setAttribute('marker-start', u); }
+    if (endKind !== 'none') { const u = make(endKind, 'e'); if (u) node.setAttribute('marker-end', u); }
   }
 
   // CSS filter string for shape/picture effects (shadow, glow, soft edges)

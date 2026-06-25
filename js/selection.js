@@ -76,12 +76,83 @@
   }
   function stopPainter() { painter = null; painterSticky = false; document.getElementById('slide-canvas').style.cursor = ''; PP.status(''); }
 
+  /* ---------- freeform / curve / scribble drawing ---------- */
+  let freedraw = null;
+  PP.armFreeDraw = function (mode) {
+    freedraw = { mode: mode, points: [], cursor: null };
+    document.getElementById('slide-canvas').style.cursor = 'crosshair';
+    if (mode !== 'scribble') window.addEventListener('mousemove', freeMove);
+    PP.status(mode === 'scribble' ? 'Drag to draw a freehand shape' : 'Click to add points; double-click to finish, click the start point to close');
+  };
+  function freeMove(e) { if (!freedraw || freedraw.mode === 'scribble') return; freedraw.cursor = PP.screenToSlide(e.clientX, e.clientY); renderFreePreview(); }
+  function freeDown(sp, e) {
+    if (freedraw.mode === 'scribble') { freedraw.points = [[sp.x, sp.y]]; drag = { mode: 'scribble' }; e.preventDefault(); return; }
+    const p = freedraw.points;
+    if (p.length > 2 && Math.hypot(sp.x - p[0][0], sp.y - p[0][1]) < 10 / S.zoom) { finishFree(true); return; }
+    p.push([sp.x, sp.y]); renderFreePreview(); e.preventDefault();
+  }
+  function finishFree(closed) {
+    const f = freedraw, pts = f ? f.points.slice() : [];
+    endFreeDraw();
+    if (pts.length < 2) return;
+    let nodes;
+    if (f.mode === 'scribble') { nodes = ptsToNodes(simplifyPts(pts, 2 / S.zoom)); }
+    else if (f.mode === 'curve') { nodes = ptsToNodes(chaikinPts(pts, 2)); }
+    else { nodes = ptsToNodes(pts); }
+    // normalize to unit coords within bbox
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    nodes.forEach(function (n) { minX = Math.min(minX, n.p[0]); minY = Math.min(minY, n.p[1]); maxX = Math.max(maxX, n.p[0]); maxY = Math.max(maxY, n.p[1]); });
+    const w = Math.max(8, maxX - minX), h = Math.max(8, maxY - minY);
+    nodes.forEach(function (n) { n.p = [(n.p[0] - minX) / w, (n.p[1] - minY) / h]; });
+    const accent = PP.State.doc.theme.accent;
+    const o = PP.makeObject('freeform', { x: minX, y: minY, w: w, h: h, nodes: nodes, closed: !!closed,
+      path: PP.nodesToPath(nodes, !!closed), fill: closed ? accent : 'none', stroke: '#2F528F', strokeWidth: 2 });
+    PP.addObject(o);
+  }
+  function endFreeDraw() {
+    window.removeEventListener('mousemove', freeMove);
+    freedraw = null;
+    document.getElementById('slide-canvas').style.cursor = '';
+    const pv = document.getElementById('free-preview'); if (pv) pv.remove();
+    PP.status('');
+  }
+  function ptsToNodes(pts) { return pts.map(function (p) { return { p: [p[0], p[1]], hi: null, ho: null, type: 'corner' }; }); }
+  function chaikinPts(pts, it) {
+    for (let k = 0; k < it; k++) { const out = [pts[0]]; for (let i = 0; i < pts.length - 1; i++) { const a = pts[i], b = pts[i + 1]; out.push([a[0] * .75 + b[0] * .25, a[1] * .75 + b[1] * .25], [a[0] * .25 + b[0] * .75, a[1] * .25 + b[1] * .75]); } out.push(pts[pts.length - 1]); pts = out; } return pts;
+  }
+  function simplifyPts(pts, eps) {
+    if (pts.length < 3) return pts;
+    const out = [pts[0]];
+    for (let i = 1; i < pts.length - 1; i++) { const a = out[out.length - 1], b = pts[i]; if (Math.hypot(b[0] - a[0], b[1] - a[1]) > eps) out.push(b); }
+    out.push(pts[pts.length - 1]); return out;
+  }
+  function renderFreePreview() {
+    if (!freedraw) return;
+    const canvas = document.getElementById('slide-canvas');
+    let svg = document.getElementById('free-preview');
+    if (!svg) {
+      svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.id = 'free-preview';
+      svg.setAttribute('viewBox', '0 0 ' + PP.SLIDE_W + ' ' + PP.SLIDE_H);
+      svg.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:90;overflow:visible';
+      canvas.appendChild(svg);
+    }
+    const pts = freedraw.points.slice();
+    if (freedraw.cursor && freedraw.mode !== 'scribble') pts.push([freedraw.cursor.x, freedraw.cursor.y]);
+    if (!pts.length) { svg.innerHTML = ''; return; }
+    const d = 'M' + pts.map(function (p) { return PP.round(p[0], 1) + ',' + PP.round(p[1], 1); }).join(' L');
+    svg.innerHTML = '<path d="' + d + '" fill="none" stroke="#2F528F" stroke-width="' + (2 / S.zoom) + '" vector-effect="non-scaling-stroke"/>' +
+      freedraw.points.map(function (p) { return '<circle cx="' + p[0] + '" cy="' + p[1] + '" r="' + (3 / S.zoom) + '" fill="#fff" stroke="#2F528F"/>'; }).join('');
+  }
+  PP.isFreeDrawing = function () { return !!freedraw; };
+  PP.finishFreeDraw = function () { if (freedraw) finishFree(false); };
+
   PP.cancelArmed = function () {
-    let was = !!(pending || painter);
-    disarm(); stopPainter();
+    let was = !!(pending || painter || freedraw);
+    disarm(); stopPainter(); endFreeDraw();
     return was;
   };
-  PP.isArmed = function () { return !!(pending || painter); };
+  PP.isArmed = function () { return !!(pending || painter || freedraw); };
 
   /* ================= CROP MODE ================= */
   let crop = null;
@@ -424,6 +495,7 @@
     const sp = PP.screenToSlide(e.clientX, e.clientY);
 
     // special modes intercept first
+    if (freedraw) { freeDown(sp, e); return; }
     if (crop) { onCropDown(sp, e); return; }
     if (epts) { if (onEditPointsDown(sp, e)) return; }
 
@@ -574,6 +646,7 @@
     if (!drag) return;
     const sp = PP.screenToSlide(e.clientX, e.clientY);
 
+    if (drag.mode === 'scribble') { freedraw.points.push([sp.x, sp.y]); renderFreePreview(); return; }
     if (drag.mode === 'adjust') {
       const c = PP.objCenter(drag.o);
       const local = PP.rotatePoint(sp.x, sp.y, c.x, c.y, -drag.o.rotation);
@@ -652,6 +725,7 @@
       PP.emit('selection');
       return;
     }
+    if (d.mode === 'scribble') { finishFree(false); return; }
     if (d.mode === 'draw') { finishDraw(d); return; }
     if (d.mode === 'adjust') { if (d.moved) PP.commit('Adjust Shape'); return; }
     if (d.mode === 'crop-resize' || d.mode === 'crop-move') { PP.status('Crop: Enter/click away to apply, Esc to cancel'); return; }
@@ -665,6 +739,7 @@
   /* ---------- double-click: edit text ---------- */
   function onDblClick(e) {
     const sp = PP.screenToSlide(e.clientX, e.clientY);
+    if (freedraw) { if (freedraw.mode !== 'scribble') finishFree(false); return; }
     if (epts) { onEditPointsDbl(sp); return; }
     if (crop) { PP.endCrop(true); return; }
     const hit = PP.topObjectAt(sp.x, sp.y);

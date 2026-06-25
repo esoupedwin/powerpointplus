@@ -48,6 +48,7 @@
       case 'fontColor': PP.formatText('foreColor', arg); break;
       case 'strokeWidth': PP.selectedObjs().forEach(function (o) { o.strokeWidth = parseFloat(arg); if (!o.stroke || o.stroke === 'none') o.stroke = '#000000'; }); PP.commit('Outline Weight'); break;
       case 'dash': PP.selectedObjs().forEach(function (o) { o.dash = arg || null; if (arg && (!o.stroke || o.stroke === 'none')) o.stroke = '#000000'; }); PP.commit('Outline Dash'); break;
+      case 'arrows': PP.selectedObjs().forEach(function (o) { o.arrowStart = arg.start; o.arrowEnd = arg.end; }); PP.commit('Arrows'); break;
       case 'merge': PP.mergeShapes(arg); break;
       case 'changeShape': changeShapeType(arg); break;
       case 'effect': applyEffect(arg); break;
@@ -733,6 +734,14 @@
         { label: 'Dashes: Dashed', run: function () { PP.cmd('dash', 'dash'); } },
         { label: 'Dashes: Dotted', run: function () { PP.cmd('dash', 'dot'); } },
         { label: 'Dashes: Dash Dot', run: function () { PP.cmd('dash', 'dashdot'); } },
+        '-',
+        { label: 'Arrows: None', run: function () { PP.cmd('arrows', { start: 'none', end: 'none' }); } },
+        { label: 'Arrows: End →', run: function () { PP.cmd('arrows', { start: 'none', end: 'triangle' }); } },
+        { label: 'Arrows: Start ←', run: function () { PP.cmd('arrows', { start: 'triangle', end: 'none' }); } },
+        { label: 'Arrows: Both ↔', run: function () { PP.cmd('arrows', { start: 'triangle', end: 'triangle' }); } },
+        { label: 'Arrows: Open End', run: function () { PP.cmd('arrows', { start: 'none', end: 'open' }); } },
+        { label: 'Arrows: Diamond End', run: function () { PP.cmd('arrows', { start: 'none', end: 'diamond' }); } },
+        { label: 'Arrows: Oval End', run: function () { PP.cmd('arrows', { start: 'none', end: 'oval' }); } },
       ]);
     } }, [PP.el('span', { class: 'ico', html: '&#9633;' }), PP.el('span', { text: 'Shape Outline' })]);
     const effectsBtn = PP.el('button', { class: 'rbtn small', onclick: function () {
