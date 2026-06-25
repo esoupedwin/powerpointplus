@@ -90,6 +90,11 @@ PowerPoint keyboard shortcuts. **No install, no build step.**
 - **Picture Styles** gallery (frame, rounded, drop shadow, soft edge…), **Picture Border**,
   **Picture Effects**, plus the **Arrange** and **Size** groups.
 
+**Comments** (Review tab)
+- **New Comment** drops a draggable marker on the slide and opens the **Comments pane** — type the
+  comment, **reply** to build a thread, **resolve** (hides the marker) or **delete**, step **Previous/Next**.
+  Comments persist per slide and never show during a slideshow.
+
 **Selection Pane & Header/Footer**
 - **Selection Pane** (Arrange ▸ Selection Pane / right-click ▸ Arrange) — lists every object on the slide;
   click to select, **eye toggle** to show/hide, **reorder** (bring forward/back), **double-click to rename**.
@@ -175,6 +180,7 @@ js/charts.js          chart objects: SVG rendering (5 types) + data-edit dialog
 js/smartart.js        SmartArt diagrams (5 layouts) + outline text-pane editor
 js/find.js            Find & Replace + View overlays (gridlines/guides)
 js/panels.js          Selection Pane + Animation Pane (sequence/timing/reorder)
+js/comments.js        slide comments: markers + threaded comments pane (Review tab)
 js/selection.js       pointer interaction: select/move/resize/rotate/marquee/reorder
 js/text.js            in-place contenteditable text editing
 js/clipboard.js       copy/cut/paste/duplicate (+ OS image paste)

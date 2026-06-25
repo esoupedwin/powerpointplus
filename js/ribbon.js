@@ -100,6 +100,12 @@
       case 'animation': PP.setAnimation(arg); break;
       case 'previewAnim': PP.previewAnimations(); break;
       case 'symbol': case 'equation': break; // opened via the anchored ribbon buttons
+      case 'newComment': PP.newComment(); break;
+      case 'showComments': PP.toggleCommentsPane(); break;
+      case 'prevComment': PP.stepComment(-1); break;
+      case 'nextComment': PP.stepComment(1); break;
+      case 'deleteComment': PP.deleteActiveComment(); break;
+      case 'spelling': PP.status('No spelling errors found.'); break;
       case 'animationPane': PP.toggleAnimationPane(); break;
       case 'view': PP.setView(arg); break;
       case 'fit': PP.fitToWindow(); break;
@@ -617,6 +623,22 @@
     ];
   }
 
+  function buildReview() {
+    const n = (PP.slide().comments || []).filter(function (c) { return !c.done; }).length;
+    return [
+      group('Proofing', [bigBtn('&#10004;', 'Spelling', 'spelling'), bigBtn('&#128214;', 'Thesaurus', 'thesaurus')]),
+      group('Comments', [
+        bigBtn('&#128172;', 'New\nComment', 'newComment'),
+        PP.el('div', { class: 'rstack' }, [
+          smallRow('&#9665;', 'Previous', 'prevComment'),
+          smallRow('&#9655;', 'Next', 'nextComment'),
+          smallRow('&#10006;', 'Delete', 'deleteComment'),
+        ]),
+        bigBtn('&#128065;', 'Show\nComments' + (n ? ' (' + n + ')' : ''), 'showComments'),
+      ]),
+    ];
+  }
+
   function buildView() {
     return [
       group('Presentation Views', [
@@ -886,6 +908,7 @@
     else if (activeTab === 'transitions') groups = buildTransitions();
     else if (activeTab === 'animations') groups = buildAnimations();
     else if (activeTab === 'slideshow') groups = buildSlideShow();
+    else if (activeTab === 'review') groups = buildReview();
     else if (activeTab === 'view') groups = buildView();
     else if (activeTab === 'shapeformat') groups = buildShapeFormat();
     else if (activeTab === 'pictureformat') groups = buildPictureFormat();

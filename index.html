@@ -35,6 +35,7 @@ document.write('<link rel="stylesheet" href="css/ribbon.css' + window.__V + '">'
       <button class="rtab" data-tab="transitions">Transitions</button>
       <button class="rtab" data-tab="animations">Animations</button>
       <button class="rtab" data-tab="slideshow">Slide Show</button>
+      <button class="rtab" data-tab="review">Review</button>
       <button class="rtab" data-tab="view">View</button>
     </div>
     <div class="ribbon-body" id="ribbon-body"><!-- groups injected by ribbon.js --></div>
@@ -110,7 +111,7 @@ document.write('<link rel="stylesheet" href="css/ribbon.css' + window.__V + '">'
 (function () {
   var files = ['util', 'state', 'geometry', 'render', 'objects', 'shapeops', 'tables', 'charts',
     'smartart', 'selection', 'text', 'clipboard', 'ribbon', 'contextmenu', 'shortcuts',
-    'slideshow', 'io', 'find', 'panels', 'app'];
+    'slideshow', 'io', 'find', 'panels', 'comments', 'app'];
   var v = window.__V || ('?v=' + Date.now());
   for (var i = 0; i < files.length; i++) document.write('<script src="js/' + files[i] + '.js' + v + '"><\/script>');
 })();

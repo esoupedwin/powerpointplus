@@ -259,6 +259,7 @@
     root.innerHTML = '';
     PP.slide().objects.forEach(function (o) { if (!o.hidden) root.appendChild(PP.objNode(o)); });
     PP.footerNodes(S.current).forEach(function (n) { root.appendChild(n); });
+    if (PP.renderCommentMarkers) PP.renderCommentMarkers(root);
     if (S.animBadges && PP.slideAnims) {
       const inv = 1 / S.zoom;
       PP.slideAnims(PP.slide()).forEach(function (a) {
