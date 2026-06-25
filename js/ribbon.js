@@ -46,7 +46,8 @@
       case 'lineColor': setProp('stroke', arg); break;
       case 'highlight': PP.formatText('backColor', arg); break;
       case 'fontColor': PP.formatText('foreColor', arg); break;
-      case 'strokeWidth': setProp('strokeWidth', parseFloat(arg)); break;
+      case 'strokeWidth': PP.selectedObjs().forEach(function (o) { o.strokeWidth = parseFloat(arg); if (!o.stroke || o.stroke === 'none') o.stroke = '#000000'; }); PP.commit('Outline Weight'); break;
+      case 'dash': PP.selectedObjs().forEach(function (o) { o.dash = arg || null; if (arg && (!o.stroke || o.stroke === 'none')) o.stroke = '#000000'; }); PP.commit('Outline Dash'); break;
       case 'merge': PP.mergeShapes(arg); break;
       case 'changeShape': changeShapeType(arg); break;
       case 'effect': applyEffect(arg); break;
@@ -143,7 +144,7 @@
   function changeShapeType(type) {
     const objs = PP.selectedObjs().filter(function (o) { return o.type !== 'image' && o.type !== 'text'; });
     if (!objs.length) return;
-    objs.forEach(function (o) { o.type = type; if (o.type === 'freeform') { o.path = null; } });
+    objs.forEach(function (o) { o.type = type; o.adj = null; if (o.type === 'freeform') { o.path = null; } });
     PP.commit('Change Shape');
   }
   const EFFECT_PRESETS = {
@@ -716,7 +717,24 @@
       gallery.appendChild(chip);
     });
     const fillBtn = colorRow('&#128396;', 'Shape Fill', 'fillColor');
-    const outlineBtn = colorRow('&#9633;', 'Shape Outline', 'lineColor');
+    const outlineBtn = PP.el('button', { class: 'rbtn small', onclick: function () {
+      PP.openMenu(outlineBtn, [
+        { icon: '&#127912;', label: 'Outline Color…', run: function () { PP.openColorPopover(outlineBtn, 'lineColor', function (c) { PP.cmd('lineColor', c); }); } },
+        { icon: '&#10005;', label: 'No Outline', run: function () { PP.cmd('lineColor', 'none'); } },
+        '-',
+        { label: 'Weight: ½ pt', run: function () { PP.cmd('strokeWidth', '0.5'); } },
+        { label: 'Weight: 1 pt', run: function () { PP.cmd('strokeWidth', '1'); } },
+        { label: 'Weight: 2¼ pt', run: function () { PP.cmd('strokeWidth', '2.25'); } },
+        { label: 'Weight: 3 pt', run: function () { PP.cmd('strokeWidth', '3'); } },
+        { label: 'Weight: 4½ pt', run: function () { PP.cmd('strokeWidth', '4.5'); } },
+        { label: 'Weight: 6 pt', run: function () { PP.cmd('strokeWidth', '6'); } },
+        '-',
+        { label: 'Dashes: Solid', run: function () { PP.cmd('dash', ''); } },
+        { label: 'Dashes: Dashed', run: function () { PP.cmd('dash', 'dash'); } },
+        { label: 'Dashes: Dotted', run: function () { PP.cmd('dash', 'dot'); } },
+        { label: 'Dashes: Dash Dot', run: function () { PP.cmd('dash', 'dashdot'); } },
+      ]);
+    } }, [PP.el('span', { class: 'ico', html: '&#9633;' }), PP.el('span', { text: 'Shape Outline' })]);
     const effectsBtn = PP.el('button', { class: 'rbtn small', onclick: function () {
       PP.openMenu(effectsBtn, [
         { icon: '&#9673;', label: 'Shadow', run: function () { PP.cmd('effect', 'shadow'); } },

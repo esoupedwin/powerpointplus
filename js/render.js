@@ -109,6 +109,15 @@
     return 'url(#' + id + ')';
   }
   PP.isGradient = function (f) { return f && typeof f === 'object'; };
+  function dashArray(dash, w) {
+    w = w || 1;
+    if (dash === 'dash') return (4 * w) + ' ' + (3 * w);
+    if (dash === 'dot') return w + ' ' + (2 * w);
+    if (dash === 'dashdot') return (4 * w) + ' ' + (2 * w) + ' ' + w + ' ' + (2 * w);
+    if (dash === 'longdash') return (8 * w) + ' ' + (3 * w);
+    return '';
+  }
+  PP.dashArray = dashArray;
   function bgCSS(b) { return PP.isGradient(b) ? PP.gradientCSS(b) : (b || '#fff'); }
   PP.bgCSS = bgCSS;
   PP.gradientCSS = function (g) {
@@ -142,7 +151,7 @@
     }
 
     svg.setAttribute('viewBox', '0 0 ' + o.w + ' ' + o.h);
-    const path = PP.shapePath(o.type, o.w, o.h);
+    const path = PP.shapePath(o.type, o.w, o.h, o.adj);
     let node;
     if (path.tag === 'line') {
       node = document.createElementNS(ns, 'line');
@@ -150,12 +159,15 @@
       node.setAttribute('x2', path.x2); node.setAttribute('y2', path.y2);
       node.setAttribute('stroke', o.stroke === 'none' ? o.fill : o.stroke);
       node.setAttribute('stroke-width', o.strokeWidth || 2);
+      if (o.dash) node.setAttribute('stroke-dasharray', dashArray(o.dash, o.strokeWidth || 2));
     } else {
       node = document.createElementNS(ns, 'path');
       node.setAttribute('d', path.d);
       node.setAttribute('fill', resolveFill(svg, ns, o.fill));
+      if (path.fillRule) node.setAttribute('fill-rule', path.fillRule);
       node.setAttribute('stroke', o.stroke === 'none' ? 'none' : o.stroke);
       node.setAttribute('stroke-width', o.strokeWidth || 0);
+      if (o.dash) node.setAttribute('stroke-dasharray', dashArray(o.dash, o.strokeWidth || 1));
       node.setAttribute('vector-effect', 'non-scaling-stroke');
     }
     if (path.markerEnd) {
@@ -401,6 +413,19 @@
           const stem = PP.el('div', { class: 'rotate-stem' });
           rotateHandlePos(rot, stem, o, inv);
           layer.appendChild(stem); layer.appendChild(rot);
+        }
+        // yellow adjustment handles
+        if (PP.shapeAdjustHandles) {
+          PP.shapeAdjustHandles(o).forEach(function (p, ai) {
+            const c = PP.objCenter(o);
+            const sp = PP.rotatePoint(o.x + p.x, o.y + p.y, c.x, c.y, o.rotation);
+            const hd = PP.el('div', { class: 'adj-handle', dataset: { adj: ai, id: o.id } });
+            hd.style.left = sp.x + 'px'; hd.style.top = sp.y + 'px';
+            hd.style.width = (10 * inv) + 'px'; hd.style.height = (10 * inv) + 'px';
+            hd.style.borderWidth = inv + 'px';
+            hd.style.transform = 'translate(-50%,-50%) rotate(' + (o.rotation + 45) + 'deg)';
+            layer.appendChild(hd);
+          });
         }
       }
     });

@@ -463,6 +463,13 @@
       e.preventDefault(); return;
     }
 
+    const adjHandle = e.target.closest('.adj-handle');
+    if (adjHandle) {
+      const o = PP.findObj(adjHandle.dataset.id);
+      if (o) { drag = { mode: 'adjust', o: o, idx: +adjHandle.dataset.adj, moved: false }; }
+      e.preventDefault(); return;
+    }
+
     if (handle) {
       startTransform(handle, sp, e);
       e.preventDefault();
@@ -567,6 +574,14 @@
     if (!drag) return;
     const sp = PP.screenToSlide(e.clientX, e.clientY);
 
+    if (drag.mode === 'adjust') {
+      const c = PP.objCenter(drag.o);
+      const local = PP.rotatePoint(sp.x, sp.y, c.x, c.y, -drag.o.rotation);
+      PP.shapeSetAdjust(drag.o, drag.idx, local.x - drag.o.x, local.y - drag.o.y);
+      drag.moved = true;
+      PP.renderObjects(); PP.renderSelection();
+      return;
+    }
     if (drag.mode === 'group-resize') { groupResize(sp, e); return; }
     if (drag.mode === 'crop-resize') { cropResize(sp); return; }
     if (drag.mode === 'crop-move') { cropMove(sp); return; }
@@ -638,6 +653,7 @@
       return;
     }
     if (d.mode === 'draw') { finishDraw(d); return; }
+    if (d.mode === 'adjust') { if (d.moved) PP.commit('Adjust Shape'); return; }
     if (d.mode === 'crop-resize' || d.mode === 'crop-move') { PP.status('Crop: Enter/click away to apply, Esc to cancel'); return; }
     if (d.mode === 'vertex' || d.mode === 'ephandle') { epts.o.path = PP.nodesToPath(epts.o.nodes); PP.commit('Edit Points'); return; }
     if (d.moved) {

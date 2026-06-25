@@ -18,10 +18,13 @@ PowerPoint keyboard shortcuts. **No install, no build step.**
 **Editing surface**
 - Slide canvas (16:9), live thumbnail panel, notes pane, status bar, zoom slider + Fit-to-window,
   **Ctrl+mouse-wheel zoom**.
-- Insert **text boxes, shapes** (20+: rectangle, rounded rect, oval, triangles, diamond,
-  pentagon/hexagon, stars, arrows, lines, heart, cloud, callout, cross…), and **pictures** —
-  **draw-to-create** (pick a shape, then drag a crosshair to draw it, exactly like PowerPoint;
-  a single click drops a default size).
+- Insert **text boxes, shapes** (35, in PowerPoint-style categories — Lines, Rectangles, Basic Shapes,
+  Block Arrows, Stars & Banners, Callouts: incl. parallelogram, trapezoid, octagon, chevron, pentagon-arrow,
+  donut, frame, cylinder, lightning, sun, moon, ribbon, wave…), and **pictures** — **draw-to-create**
+  (pick a shape, then drag a crosshair to draw it; a single click drops a default size).
+- **Yellow adjustment handles** (like PowerPoint) on rounded-rect corner radius, block-arrow shaft/head,
+  star point depth, parallelogram/trapezoid slant, cross thickness, chevron notch.
+- **Shape Outline** ▸ color, **weight** (½–6 pt) and **dash style** (solid/dashed/dotted/dash-dot).
 - **Move / resize / rotate** with live handles & rotation handle; **Shift** = constrain/aspect,
   **Ctrl** = resize from center; **Ctrl+drag = duplicate**; **Shift+click** to multi-select;
   marquee select; **smart alignment guides** with snapping.

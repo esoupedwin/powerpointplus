@@ -138,6 +138,7 @@ body{
 .handle[data-h="s"]{cursor:ns-resize}
 .handle[data-h="e"]{cursor:ew-resize}
 .handle[data-h="w"]{cursor:ew-resize}
+.adj-handle{position:absolute;width:10px;height:10px;background:#ffd34d;border:1px solid #c99a00;pointer-events:auto;z-index:62;cursor:pointer;box-shadow:0 0 2px rgba(0,0,0,.3)}
 .handle.rotate{
   border-radius:50%;background:#fff;border:1px solid var(--sel);
   width:12px;height:12px;cursor:grab;

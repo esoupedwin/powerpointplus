@@ -2,53 +2,108 @@
 (function (PP) {
   'use strict';
 
+  function cl(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+
+  // Adjustment handle registry: yellow handles that tweak shape parameters (o.adj array).
+  // handles(w,h,adj) -> [{x,y}] in local coords; set(i,localX,localY,w,h,adj) -> new adj.
+  const ADJUST = {
+    roundRect: { defaults: [0.24],
+      handles: function (w, h, a) { return [{ x: a[0] * Math.min(w, h) / 2, y: 0 }]; },
+      set: function (i, x, y, w, h, a) { a = a.slice(); a[0] = cl(x / (Math.min(w, h) / 2), 0, 1); return a; } },
+    arrowRight: { defaults: [0.5, 0.45],
+      handles: function (w, h, a) { return [{ x: w * (1 - a[1]), y: (h - a[0] * h) / 2 }]; },
+      set: function (i, x, y, w, h, a) { a = a.slice(); a[1] = cl((w - x) / w, 0.02, 0.98); a[0] = cl((h - 2 * y) / h, 0.02, 0.98); return a; } },
+    arrowLeft: { defaults: [0.5, 0.45],
+      handles: function (w, h, a) { return [{ x: w * a[1], y: (h - a[0] * h) / 2 }]; },
+      set: function (i, x, y, w, h, a) { a = a.slice(); a[1] = cl(x / w, 0.02, 0.98); a[0] = cl((h - 2 * y) / h, 0.02, 0.98); return a; } },
+    arrowUp: { defaults: [0.5, 0.45],
+      handles: function (w, h, a) { return [{ x: (w - a[0] * w) / 2, y: h * a[1] }]; },
+      set: function (i, x, y, w, h, a) { a = a.slice(); a[1] = cl(y / h, 0.02, 0.98); a[0] = cl((w - 2 * x) / w, 0.02, 0.98); return a; } },
+    arrowDown: { defaults: [0.5, 0.45],
+      handles: function (w, h, a) { return [{ x: (w - a[0] * w) / 2, y: h * (1 - a[1]) }]; },
+      set: function (i, x, y, w, h, a) { a = a.slice(); a[1] = cl((h - y) / h, 0.02, 0.98); a[0] = cl((w - 2 * x) / w, 0.02, 0.98); return a; } },
+    star: { defaults: [0.38], handles: starHandle, set: starSet },
+    star6: { defaults: [0.38], handles: function (w, h, a) { return starHandle(w, h, a, 6); }, set: function (i, x, y, w, h, a) { return starSet(i, x, y, w, h, a); } },
+    plus: { defaults: [0.33],
+      handles: function (w, h, a) { return [{ x: a[0] * w, y: a[0] * h }]; },
+      set: function (i, x, y, w, h, a) { a = a.slice(); a[0] = cl(Math.min(x / w, y / h), 0.04, 0.46); return a; } },
+    parallelogram: { defaults: [0.25],
+      handles: function (w, h, a) { return [{ x: a[0] * w, y: 0 }]; },
+      set: function (i, x, y, w, h, a) { a = a.slice(); a[0] = cl(x / w, 0, 0.9); return a; } },
+    trapezoid: { defaults: [0.25],
+      handles: function (w, h, a) { return [{ x: a[0] * w, y: 0 }]; },
+      set: function (i, x, y, w, h, a) { a = a.slice(); a[0] = cl(x / w, 0, 0.49); return a; } },
+    chevron: { defaults: [0.5],
+      handles: function (w, h, a) { return [{ x: a[0] * Math.min(w, h), y: 0 }]; },
+      set: function (i, x, y, w, h, a) { a = a.slice(); a[0] = cl(x / Math.min(w, h), 0, 1); return a; } },
+    homePlate: { defaults: [0.5],
+      handles: function (w, h, a) { return [{ x: w - a[0] * Math.min(w, h), y: 0 }]; },
+      set: function (i, x, y, w, h, a) { a = a.slice(); a[0] = cl((w - x) / Math.min(w, h), 0, 1); return a; } },
+  };
+  function starHandle(w, h, a, pts) { pts = pts || 5; const cx = w / 2, cy = h / 2, R = Math.min(w, h) / 2, ir = a[0] * R, ang = PP.deg2rad(-90 + 180 / pts); const sx = w / Math.min(w, h), sy = h / Math.min(w, h); return [{ x: cx + sx * ir * Math.cos(ang), y: cy + sy * ir * Math.sin(ang) }]; }
+  function starSet(i, x, y, w, h, a) { const cx = w / 2, cy = h / 2, R = Math.min(w, h) / 2, sx = w / Math.min(w, h), sy = h / Math.min(w, h); const dist = Math.hypot((x - cx) / sx, (y - cy) / sy); a = a.slice(); a[0] = cl(dist / R, 0.05, 0.95); return a; }
+
+  PP.shapeAdjustHandles = function (o) { const s = ADJUST[o.type]; if (!s) return []; return s.handles(o.w, o.h, adjOf(o)); };
+  PP.shapeSetAdjust = function (o, i, lx, ly) { const s = ADJUST[o.type]; if (!s) return; o.adj = s.set(i, lx, ly, o.w, o.h, adjOf(o)); };
+  function adjOf(o) { const s = ADJUST[o.type]; const def = s ? s.defaults : []; return (o.adj && o.adj.length) ? o.adj : def.slice(); }
+  PP.shapeHasAdjust = function (type) { return !!ADJUST[type]; };
+
   // Return an SVG path (or line) description for a shape type at size w×h
-  PP.shapePath = function (type, w, h) {
-    const W = w, H = h;
+  PP.shapePath = function (type, w, h, adj) {
+    const W = w, H = h, m = Math.min(W, H);
+    const A = function (i, d) { return (adj && adj[i] != null) ? adj[i] : (ADJUST[type] && ADJUST[type].defaults[i] != null ? ADJUST[type].defaults[i] : d); };
     switch (type) {
       case 'rect': return { d: rectPath(0, 0, W, H) };
-      case 'roundRect': {
-        const r = Math.min(W, H) * 0.12;
-        return { d: 'M' + r + ',0 H' + (W - r) + ' Q' + W + ',0 ' + W + ',' + r + ' V' + (H - r) +
-          ' Q' + W + ',' + H + ' ' + (W - r) + ',' + H + ' H' + r + ' Q0,' + H + ' 0,' + (H - r) +
-          ' V' + r + ' Q0,0 ' + r + ',0 Z' };
-      }
+      case 'roundRect': return { d: roundRectPath(W, H, A(0, 0.24) * m / 2) };
       case 'ellipse': return { d: ellipsePath(W, H) };
       case 'triangle': return { d: 'M' + (W / 2) + ',0 L' + W + ',' + H + ' L0,' + H + ' Z' };
       case 'rtriangle': return { d: 'M0,0 L0,' + H + ' L' + W + ',' + H + ' Z' };
       case 'diamond': return { d: 'M' + (W / 2) + ',0 L' + W + ',' + (H / 2) + ' L' + (W / 2) + ',' + H + ' L0,' + (H / 2) + ' Z' };
       case 'pentagon': return { d: poly(W, H, 5, -90) };
       case 'hexagon': return { d: poly(W, H, 6, 0) };
-      case 'star': return { d: star(W, H, 5) };
-      case 'star6': return { d: star(W, H, 6) };
-      case 'arrowRight': return { d: 'M0,' + (H * .3) + ' H' + (W * .6) + ' V0 L' + W + ',' + (H / 2) + ' L' + (W * .6) + ',' + H + ' V' + (H * .7) + ' H0 Z' };
-      case 'arrowLeft': return { d: 'M' + W + ',' + (H * .3) + ' H' + (W * .4) + ' V0 L0,' + (H / 2) + ' L' + (W * .4) + ',' + H + ' V' + (H * .7) + ' H' + W + ' Z' };
-      case 'arrowUp': return { d: 'M' + (W * .3) + ',' + H + ' V' + (H * .4) + ' H0 L' + (W / 2) + ',0 L' + W + ',' + (H * .4) + ' H' + (W * .7) + ' V' + H + ' Z' };
-      case 'arrowDown': return { d: 'M' + (W * .3) + ',0 V' + (H * .6) + ' H0 L' + (W / 2) + ',' + H + ' L' + W + ',' + (H * .6) + ' H' + (W * .7) + ' V0 Z' };
-      case 'callout': {
-        const r = 8;
-        return { d: 'M' + r + ',0 H' + (W - r) + ' Q' + W + ',0 ' + W + ',' + r + ' V' + (H * .65) +
-          ' Q' + W + ',' + (H * .75) + ' ' + (W - r) + ',' + (H * .75) + ' H' + (W * .35) +
-          ' L' + (W * .2) + ',' + H + ' L' + (W * .25) + ',' + (H * .75) + ' H' + r +
-          ' Q0,' + (H * .75) + ' 0,' + (H * .65) + ' V' + r + ' Q0,0 ' + r + ',0 Z' };
-      }
+      case 'octagon': { const c = m * 0.29; return { d: 'M' + c + ',0 H' + (W - c) + ' L' + W + ',' + c + ' V' + (H - c) + ' L' + (W - c) + ',' + H + ' H' + c + ' L0,' + (H - c) + ' V' + c + ' Z' }; }
+      case 'star': return { d: star(W, H, 5, A(0, 0.38)) };
+      case 'star6': return { d: star(W, H, 6, A(0, 0.38)) };
+      case 'sun': return { d: star(W, H, 12, 0.62) };
+      case 'arrowRight': { const sh = A(0, 0.5) * H, hl = A(1, 0.45) * W, t = (H - sh) / 2, b = t + sh, hx = W - hl; return { d: 'M0,' + t + ' H' + hx + ' V0 L' + W + ',' + (H / 2) + ' L' + hx + ',' + H + ' V' + b + ' H0 Z' }; }
+      case 'arrowLeft': { const sh = A(0, 0.5) * H, hl = A(1, 0.45) * W, t = (H - sh) / 2, b = t + sh, hx = hl; return { d: 'M' + W + ',' + t + ' H' + hx + ' V0 L0,' + (H / 2) + ' L' + hx + ',' + H + ' V' + b + ' H' + W + ' Z' }; }
+      case 'arrowUp': { const sw = A(0, 0.5) * W, hh = A(1, 0.45) * H, l = (W - sw) / 2, r = l + sw, hy = hh; return { d: 'M' + l + ',' + H + ' V' + hy + ' H0 L' + (W / 2) + ',0 L' + W + ',' + hy + ' H' + r + ' V' + H + ' Z' }; }
+      case 'arrowDown': { const sw = A(0, 0.5) * W, hh = A(1, 0.45) * H, l = (W - sw) / 2, r = l + sw, hy = H - hh; return { d: 'M' + l + ',0 V' + hy + ' H0 L' + (W / 2) + ',' + H + ' L' + W + ',' + hy + ' H' + r + ' V0 Z' }; }
+      case 'doubleArrow': { const sh = H * 0.5, hl = W * 0.25, t = (H - sh) / 2, b = t + sh; return { d: 'M0,' + (H / 2) + ' L' + hl + ',0 V' + t + ' H' + (W - hl) + ' V0 L' + W + ',' + (H / 2) + ' L' + (W - hl) + ',' + H + ' V' + b + ' H' + hl + ' V' + H + ' Z' }; }
+      case 'chevron': { const n = A(0, 0.5) * m; return { d: 'M0,0 H' + (W - n) + ' L' + W + ',' + (H / 2) + ' L' + (W - n) + ',' + H + ' H0 L' + n + ',' + (H / 2) + ' Z' }; }
+      case 'homePlate': { const n = A(0, 0.5) * m; return { d: 'M0,0 H' + (W - n) + ' L' + W + ',' + (H / 2) + ' L' + (W - n) + ',' + H + ' H0 Z' }; }
+      case 'parallelogram': { const s = A(0, 0.25) * W; return { d: 'M' + s + ',0 H' + W + ' L' + (W - s) + ',' + H + ' H0 Z' }; }
+      case 'trapezoid': { const s = A(0, 0.25) * W; return { d: 'M' + s + ',0 H' + (W - s) + ' L' + W + ',' + H + ' H0 Z' }; }
+      case 'Lshape': { const t = m * 0.4; return { d: 'M0,0 H' + t + ' V' + (H - t) + ' H' + W + ' V' + H + ' H0 Z' }; }
+      case 'frame': { const t = m * 0.12; return { d: rectPath(0, 0, W, H) + ' ' + rectPath(t, t, W - 2 * t, H - 2 * t), fillRule: 'evenodd' }; }
+      case 'donut': { return { d: ellipsePath(W, H) + ' ' + ellipseAt(W / 2, H / 2, W * 0.27, H * 0.27), fillRule: 'evenodd' }; }
+      case 'plus': { const t = A(0, 0.33); return { d: 'M' + (W * t) + ',0 H' + (W * (1 - t)) + ' V' + (H * t) + ' H' + W + ' V' + (H * (1 - t)) + ' H' + (W * (1 - t)) + ' V' + H + ' H' + (W * t) + ' V' + (H * (1 - t)) + ' H0 V' + (H * t) + ' H' + (W * t) + ' Z' }; }
+      case 'lightning': return { d: 'M' + (W * .55) + ',0 L' + (W * .15) + ',' + (H * .52) + ' L' + (W * .45) + ',' + (H * .5) + ' L' + (W * .2) + ',' + H + ' L' + (W * .85) + ',' + (H * .42) + ' L' + (W * .52) + ',' + (H * .44) + ' L' + (W * .82) + ',0 Z' };
+      case 'moon': return { d: 'M' + (W * .72) + ',' + (H * .02) + ' A' + (W * .5) + ',' + (H * .5) + ' 0 1,0 ' + (W * .72) + ',' + (H * .98) + ' A' + (W * .36) + ',' + (H * .42) + ' 0 1,1 ' + (W * .72) + ',' + (H * .02) + ' Z' };
+      case 'ribbon': { const bh = H * 0.62, t = (H - bh) / 2, b = t + bh, n = W * 0.12; return { d: 'M0,' + t + ' H' + (W - n) + ' L' + W + ',' + (H / 2) + ' L' + (W - n) + ',' + b + ' H0 L' + n + ',' + (H / 2) + ' Z' }; }
+      case 'wave': return { d: 'M0,' + (H * .2) + ' C' + (W * .25) + ',0 ' + (W * .25) + ',' + (H * .4) + ' ' + (W * .5) + ',' + (H * .2) + ' C' + (W * .75) + ',0 ' + (W * .75) + ',' + (H * .4) + ' ' + W + ',' + (H * .2) + ' V' + (H * .8) + ' C' + (W * .75) + ',' + H + ' ' + (W * .75) + ',' + (H * .6) + ' ' + (W * .5) + ',' + (H * .8) + ' C' + (W * .25) + ',' + H + ' ' + (W * .25) + ',' + (H * .6) + ' 0,' + (H * .8) + ' Z' };
+      case 'cylinder': { const eh = H * 0.14; return { d: 'M0,' + eh + ' A' + (W / 2) + ',' + eh + ' 0 0,1 ' + W + ',' + eh + ' V' + (H - eh) + ' A' + (W / 2) + ',' + eh + ' 0 0,1 0,' + (H - eh) + ' Z M0,' + eh + ' A' + (W / 2) + ',' + eh + ' 0 0,0 ' + W + ',' + eh }; }
+      case 'callout': { const r = 8; return { d: 'M' + r + ',0 H' + (W - r) + ' Q' + W + ',0 ' + W + ',' + r + ' V' + (H * .65) + ' Q' + W + ',' + (H * .75) + ' ' + (W - r) + ',' + (H * .75) + ' H' + (W * .35) + ' L' + (W * .2) + ',' + H + ' L' + (W * .25) + ',' + (H * .75) + ' H' + r + ' Q0,' + (H * .75) + ' 0,' + (H * .65) + ' V' + r + ' Q0,0 ' + r + ',0 Z' }; }
       case 'heart': return { d: 'M' + (W / 2) + ',' + (H * .25) + ' C' + (W * .5) + ',' + (H * .1) + ' ' + (W * .2) + ',' + (H * -.05) + ' ' + (W * .1) + ',' + (H * .25) + ' C0,' + (H * .55) + ' ' + (W * .35) + ',' + (H * .75) + ' ' + (W / 2) + ',' + H + ' C' + (W * .65) + ',' + (H * .75) + ' ' + W + ',' + (H * .55) + ' ' + (W * .9) + ',' + (H * .25) + ' C' + (W * .8) + ',' + (H * -.05) + ' ' + (W * .5) + ',' + (H * .1) + ' ' + (W / 2) + ',' + (H * .25) + ' Z' };
       case 'cloud': return { d: cloudPath(W, H) };
       case 'line': return { tag: 'line', x1: 0, y1: H, x2: W, y2: 0 };
       case 'arrow': return { tag: 'line', x1: 0, y1: H, x2: W, y2: 0, markerEnd: true };
-      case 'plus': {
-        const t = 0.33;
-        return { d: 'M' + (W * t) + ',0 H' + (W * (1 - t)) + ' V' + (H * t) + ' H' + W + ' V' + (H * (1 - t)) +
-          ' H' + (W * (1 - t)) + ' V' + H + ' H' + (W * t) + ' V' + (H * (1 - t)) + ' H0 V' + (H * t) + ' H' + (W * t) + ' Z' };
-      }
       default: return { d: rectPath(0, 0, W, H) };
     }
   };
 
   function rectPath(x, y, w, h) { return 'M' + x + ',' + y + ' H' + (x + w) + ' V' + (y + h) + ' H' + x + ' Z'; }
+  function roundRectPath(W, H, r) {
+    r = Math.max(0, Math.min(r, Math.min(W, H) / 2));
+    return 'M' + r + ',0 H' + (W - r) + ' Q' + W + ',0 ' + W + ',' + r + ' V' + (H - r) +
+      ' Q' + W + ',' + H + ' ' + (W - r) + ',' + H + ' H' + r + ' Q0,' + H + ' 0,' + (H - r) + ' V' + r + ' Q0,0 ' + r + ',0 Z';
+  }
   function ellipsePath(w, h) {
     const rx = w / 2, ry = h / 2;
     return 'M0,' + ry + ' A' + rx + ',' + ry + ' 0 1,0 ' + w + ',' + ry + ' A' + rx + ',' + ry + ' 0 1,0 0,' + ry + ' Z';
+  }
+  function ellipseAt(cx, cy, rx, ry) {
+    return 'M' + (cx - rx) + ',' + cy + ' A' + rx + ',' + ry + ' 0 1,0 ' + (cx + rx) + ',' + cy + ' A' + rx + ',' + ry + ' 0 1,0 ' + (cx - rx) + ',' + cy + ' Z';
   }
   function poly(w, h, n, startDeg) {
     const cx = w / 2, cy = h / 2, rx = w / 2, ry = h / 2;
@@ -60,15 +115,14 @@
     }
     return d + 'Z';
   }
-  function star(w, h, points) {
-    const cx = w / 2, cy = h / 2, R = Math.min(w, h) / 2, r = R * 0.4;
+  function star(w, h, points, innerRatio) {
+    const cx = w / 2, cy = h / 2, R = Math.min(w, h) / 2, r = R * (innerRatio == null ? 0.4 : innerRatio);
+    const sx = w / Math.min(w, h), sy = h / Math.min(w, h);
     let d = '';
     for (let i = 0; i < points * 2; i++) {
       const rad = i % 2 ? r : R;
       const a = PP.deg2rad(-90 + i * 180 / points);
-      const x = cx + (w / Math.min(w, h)) * rad * Math.cos(a);
-      const y = cy + (h / Math.min(w, h)) * rad * Math.sin(a);
-      d += (i ? 'L' : 'M') + PP.round(x, 2) + ',' + PP.round(y, 2) + ' ';
+      d += (i ? 'L' : 'M') + PP.round(cx + sx * rad * Math.cos(a), 2) + ',' + PP.round(cy + sy * rad * Math.sin(a), 2) + ' ';
     }
     return d + 'Z';
   }
@@ -80,20 +134,26 @@
       ' a' + (w * .12) + ',' + (h * .15) + ' 0 0,1 ' + (-w * .1) + ',' + (h * .25) + ' Z';
   }
 
-  // shapes available in the Insert > Shapes palette
-  PP.SHAPES = [
-    'rect', 'roundRect', 'ellipse', 'triangle', 'rtriangle', 'diamond',
-    'pentagon', 'hexagon', 'star', 'star6', 'plus', 'heart',
-    'cloud', 'callout', 'arrowRight', 'arrowLeft', 'arrowUp', 'arrowDown',
-    'line', 'arrow'
+  // shapes grouped into PowerPoint-style categories
+  PP.SHAPE_CATEGORIES = [
+    { name: 'Lines', shapes: ['line', 'arrow'] },
+    { name: 'Rectangles', shapes: ['rect', 'roundRect', 'parallelogram', 'trapezoid', 'Lshape', 'frame'] },
+    { name: 'Basic Shapes', shapes: ['ellipse', 'triangle', 'rtriangle', 'diamond', 'pentagon', 'hexagon', 'octagon', 'plus', 'donut', 'cylinder', 'heart', 'cloud', 'lightning', 'sun', 'moon'] },
+    { name: 'Block Arrows', shapes: ['arrowRight', 'arrowLeft', 'arrowUp', 'arrowDown', 'doubleArrow', 'chevron', 'homePlate'] },
+    { name: 'Stars and Banners', shapes: ['star', 'star6', 'ribbon', 'wave'] },
+    { name: 'Callouts', shapes: ['callout'] },
   ];
+  PP.SHAPES = PP.SHAPE_CATEGORIES.reduce(function (a, c) { return a.concat(c.shapes); }, []);
 
   PP.SHAPE_NAMES = {
     rect: 'Rectangle', roundRect: 'Rounded Rectangle', ellipse: 'Oval', triangle: 'Isosceles Triangle',
     rtriangle: 'Right Triangle', diamond: 'Diamond', pentagon: 'Pentagon', hexagon: 'Hexagon',
-    star: '5-Point Star', star6: '6-Point Star', plus: 'Cross', heart: 'Heart', cloud: 'Cloud',
-    callout: 'Speech Bubble', arrowRight: 'Right Arrow', arrowLeft: 'Left Arrow', arrowUp: 'Up Arrow',
-    arrowDown: 'Down Arrow', line: 'Line', arrow: 'Arrow'
+    octagon: 'Octagon', star: '5-Point Star', star6: '6-Point Star', sun: 'Sun', plus: 'Cross',
+    heart: 'Heart', cloud: 'Cloud', lightning: 'Lightning Bolt', moon: 'Moon', donut: 'Donut',
+    cylinder: 'Cylinder', frame: 'Frame', Lshape: 'L-Shape', parallelogram: 'Parallelogram',
+    trapezoid: 'Trapezoid', callout: 'Speech Bubble', arrowRight: 'Right Arrow', arrowLeft: 'Left Arrow',
+    arrowUp: 'Up Arrow', arrowDown: 'Down Arrow', doubleArrow: 'Left-Right Arrow', chevron: 'Chevron',
+    homePlate: 'Pentagon Arrow', ribbon: 'Ribbon', wave: 'Wave', line: 'Line', arrow: 'Arrow'
   };
 
   /* ---------- Bézier node model (for Edit Points) ---------- */
@@ -158,7 +218,7 @@
   PP.shapeToNodes = function (o) {
     if (o.type === 'ellipse') return PP.ellipseNodes();
     if (o.type === 'freeform' && o.nodes) return PP.deepClone(o.nodes);
-    const d = (o.type === 'freeform' && o.path) ? o.path : PP.shapePath(o.type, 1, 1).d;
+    const d = (o.type === 'freeform' && o.path) ? o.path : PP.shapePath(o.type, 1, 1, o.adj).d;
     if (!d) return null;
     return PP.pathToNodes(d);
   };

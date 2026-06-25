@@ -141,22 +141,28 @@
   };
   function rotateSel(d) { PP.selectedObjs().forEach(function (o) { o.rotation = (o.rotation + d) % 360; }); PP.commit('Rotate'); }
 
+  function shapeCellSVG(t) {
+    const ns = 'http://www.w3.org/2000/svg';
+    const svg = document.createElementNS(ns, 'svg'); svg.setAttribute('viewBox', '0 0 20 20');
+    const pp = PP.shapePath(t, 18, 18);
+    let node;
+    if (pp.tag === 'line') { node = document.createElementNS(ns, 'line'); node.setAttribute('x1', 2); node.setAttribute('y1', 16); node.setAttribute('x2', 16); node.setAttribute('y2', 2); node.setAttribute('stroke', '#444'); node.setAttribute('stroke-width', 2); if (t === 'arrow') node.setAttribute('marker-end', ''); }
+    else { node = document.createElementNS(ns, 'path'); node.setAttribute('d', pp.d); if (pp.fillRule) node.setAttribute('fill-rule', pp.fillRule); node.setAttribute('transform', 'translate(1,1)'); node.setAttribute('fill', '#8aa9d6'); node.setAttribute('stroke', '#3a5a8a'); }
+    svg.appendChild(node); return svg;
+  }
   PP.openShapesMenu = function (anchor) {
     PP.hideMenus();
-    const m = PP.el('div', { class: 'r-menu', style: 'padding:10px' });
-    m.appendChild(PP.el('div', { class: 'row-label', style: 'font-size:11px;color:#605e5c;margin-bottom:6px', text: 'Recently Used Shapes' }));
-    const grid = PP.el('div', { class: 'shape-grid' });
-    PP.SHAPES.forEach(function (t) {
-      const cell = PP.el('div', { class: 'shape-cell', title: PP.SHAPE_NAMES[t], onclick: function () { PP.cmd('insertShape', t); PP.hideMenus(); } });
-      const ns = 'http://www.w3.org/2000/svg';
-      const svg = document.createElementNS(ns, 'svg'); svg.setAttribute('viewBox', '0 0 20 20');
-      const pp = PP.shapePath(t, 18, 18);
-      let node;
-      if (pp.tag === 'line') { node = document.createElementNS(ns, 'line'); node.setAttribute('x1', 2); node.setAttribute('y1', 16); node.setAttribute('x2', 16); node.setAttribute('y2', 2); node.setAttribute('stroke', '#444'); node.setAttribute('stroke-width', 2); }
-      else { node = document.createElementNS(ns, 'path'); node.setAttribute('d', pp.d); node.setAttribute('transform', 'translate(1,1)'); node.setAttribute('fill', '#8aa9d6'); node.setAttribute('stroke', '#3a5a8a'); }
-      svg.appendChild(node); cell.appendChild(svg); grid.appendChild(cell);
+    const m = PP.el('div', { class: 'r-menu shapes-menu', style: 'padding:10px;max-height:70vh;overflow:auto' });
+    PP.SHAPE_CATEGORIES.forEach(function (cat) {
+      m.appendChild(PP.el('div', { class: 'row-label', style: 'font-size:11px;color:#605e5c;margin:6px 0 4px', text: cat.name }));
+      const grid = PP.el('div', { class: 'shape-grid' });
+      cat.shapes.forEach(function (t) {
+        const cell = PP.el('div', { class: 'shape-cell', title: PP.SHAPE_NAMES[t] || t, onclick: function () { PP.cmd('insertShape', t); PP.hideMenus(); } });
+        cell.appendChild(shapeCellSVG(t));
+        grid.appendChild(cell);
+      });
+      m.appendChild(grid);
     });
-    m.appendChild(grid);
     track(m); positionPop(m, anchor);
   };
 

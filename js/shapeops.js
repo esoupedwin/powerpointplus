@@ -26,7 +26,7 @@
       p.addPath(new Path2D(o.path), m);
       ctx.fillStyle = '#000'; ctx.fill(p, o.fillRule === 'evenodd' ? 'evenodd' : 'nonzero');
     } else {
-      d = PP.shapePath(o.type, o.w, o.h).d;
+      d = PP.shapePath(o.type, o.w, o.h, o.adj).d;
       ctx.fillStyle = '#000'; ctx.fill(new Path2D(d));
     }
     const img = ctx.getImageData(0, 0, cw, ch).data;
