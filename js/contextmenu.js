@@ -12,7 +12,7 @@
   function track(el) { openEls.push(el); document.body.appendChild(el); return el; }
 
   document.addEventListener('mousedown', function (e) {
-    if (e.target.closest('.r-menu') || e.target.closest('.color-pop') || e.target.closest('#context-menu')) return;
+    if (e.target.closest('.r-menu') || e.target.closest('.color-pop') || e.target.closest('.symbol-pop') || e.target.closest('#context-menu')) return;
     if (e.target.closest('.color-btn') || e.target.closest('.rbtn')) return;
     PP.hideMenus();
   }, true);
